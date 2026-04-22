@@ -1,896 +1,780 @@
 // ── STORE ─────────────────────────────────────────────────────────────────────
 const Store = {
-  _get(k, def) { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch { return def; } },
-  _set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
-  getWorkouts() { return this._get('workouts', []); },
-  saveWorkout(w) { const ws = this.getWorkouts(); ws.unshift(w); this._set('workouts', ws); },
-  getActive() { return this._get('active', null); },
-  setActive(w) { this._set('active', w); },
-  clearActive() { localStorage.removeItem('active'); },
-  getPRs() { return this._get('prs', {}); },
-  updatePR(exId, weight, reps, date) {
-    const prs = this.getPRs();
-    if (!prs[exId] || weight > prs[exId].weight) prs[exId] = { weight, reps, date };
-    this._set('prs', prs);
+  _get(k,d){try{const v=localStorage.getItem(k);return v!=null?JSON.parse(v):d;}catch{return d;}},
+  _set(k,v){localStorage.setItem(k,JSON.stringify(v));},
+  getWorkouts(){return this._get('workouts',[]);},
+  saveWorkout(w){const ws=this.getWorkouts();ws.unshift(w);this._set('workouts',ws);},
+  getActive(){return this._get('active',null);},
+  setActive(w){this._set('active',w);},
+  clearActive(){localStorage.removeItem('active');},
+  getPRs(){return this._get('prs',{});},
+  updatePR(id,weight,reps,date){
+    const prs=this.getPRs();
+    if(!prs[id]||weight>prs[id].weight)prs[id]={weight,reps,date};
+    this._set('prs',prs);
   },
-  getSettings() { return this._get('settings', { unit: 'kg', restTime: 90 }); },
-  saveSettings(s) { this._set('settings', s); },
-  getProgram() { return this._get('program', null); },
-  setProgram(p) { this._set('program', p); },
-  clearProgram() { localStorage.removeItem('program'); }
+  getSettings(){return this._get('settings',{unit:'kg',restTime:90,name:'Atleta'});},
+  saveSettings(s){this._set('settings',s);},
+  getProgram(){return this._get('program',null);},
+  setProgram(p){this._set('program',p);},
+  clearProgram(){localStorage.removeItem('program');}
 };
 
 // ── ROUTER ────────────────────────────────────────────────────────────────────
-const Router = {
-  stack: [],
-  go(view, params = {}) {
-    this.stack.push({ view, params });
-    App.render(view, params);
-  },
-  back() {
+const Router={
+  stack:[],
+  go(view,params={}){this.stack.push({view,params});App.render(view,params);},
+  back(){
     this.stack.pop();
-    const prev = this.stack[this.stack.length - 1] || { view: 'home', params: {} };
-    App.render(prev.view, prev.params);
+    const p=this.stack[this.stack.length-1]||{view:'home',params:{}};
+    App.render(p.view,p.params);
   },
-  reset(view) {
-    this.stack = [{ view, params: {} }];
-    App.render(view, {});
-  }
+  reset(view){this.stack=[{view,params:{}}];App.render(view,{});}
 };
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
-function fmt(n) { return n >= 10 ? n : '0' + n; }
-function fmtTime(s) { return `${fmt(Math.floor(s / 60))}:${fmt(s % 60)}`; }
-function fmtDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-function daysAgo(iso) {
-  const diff = Math.floor((Date.now() - new Date(iso)) / 86400000);
-  if (diff === 0) return 'Hoy';
-  if (diff === 1) return 'Ayer';
-  return `Hace ${diff} días`;
-}
-function totalVol(exercises, unit) {
-  let v = 0;
-  exercises.forEach(ex => ex.sets.forEach(s => { if (s.completed) v += (s.weight || 0) * (s.reps || 0); }));
-  return v > 0 ? `${v.toLocaleString()} ${unit}` : '—';
-}
-function getEx(id) { return EXERCISES.find(e => e.id === id); }
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.remove('hidden');
-  setTimeout(() => t.classList.add('hidden'), 2200);
-}
-function qs(sel, ctx = document) { return ctx.querySelector(sel); }
-function el(tag, cls, html = '') {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (html) e.innerHTML = html;
-  return e;
+const pad=n=>n>=10?n:'0'+n;
+const fmtTime=s=>`${pad(Math.floor(s/60))}:${pad(s%60)}`;
+const fmtDate=iso=>new Date(iso).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+const daysAgo=iso=>{
+  const d=Math.floor((Date.now()-new Date(iso))/86400000);
+  return d===0?'Hoy':d===1?'Ayer':`Hace ${d} días`;
+};
+const totalVol=(exs,unit)=>{
+  let v=0;exs.forEach(ex=>ex.sets.forEach(s=>{if(s.completed)v+=(+s.weight||0)*(+s.reps||0);}));
+  return v>0?`${v.toLocaleString()} ${unit}`:'—';
+};
+const getEx=id=>EXERCISES.find(e=>e.id===id);
+const qs=(s,ctx=document)=>ctx.querySelector(s);
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.remove('hidden');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.add('hidden'),2500);
 }
 
-// ── TIMER ─────────────────────────────────────────────────────────────────────
-const WorkoutTimer = {
-  _start: null, _iv: null,
-  start() { this._start = Date.now(); this._iv = setInterval(() => this._tick(), 1000); },
-  stop() { clearInterval(this._iv); this._iv = null; },
-  elapsed() { return this._start ? Math.floor((Date.now() - this._start) / 1000) : 0; },
-  _tick() {
-    const el = document.getElementById('aw-timer');
-    if (el) el.textContent = fmtTime(this.elapsed());
-  }
+// ── WORKOUT TIMER ─────────────────────────────────────────────────────────────
+const WorkoutTimer={
+  _start:null,_iv:null,
+  start(savedStart){
+    this._start=savedStart||Date.now();
+    clearInterval(this._iv);
+    this._iv=setInterval(()=>{
+      const el=document.getElementById('aw-timer');
+      if(el)el.textContent=fmtTime(this.elapsed());
+    },1000);
+  },
+  stop(){clearInterval(this._iv);this._iv=null;},
+  elapsed(){return this._start?Math.floor((Date.now()-this._start)/1000):0;},
+  getStart(){return this._start;}
 };
 
-const RestTimer = {
-  _total: 0, _left: 0, _iv: null,
-  start(secs) {
-    this.stop();
-    this._total = secs; this._left = secs;
+// ── REST TIMER ────────────────────────────────────────────────────────────────
+const RestTimer={
+  _total:0,_left:0,_iv:null,
+  start(secs){
+    this.stop();this._total=secs;this._left=secs;
     this._render();
-    this._iv = setInterval(() => {
+    this._iv=setInterval(()=>{
       this._left--;
-      if (this._left <= 0) { this.stop(); this._hide(); return; }
+      if(this._left<=0){this.stop();this._hide();return;}
       this._render();
-    }, 1000);
+    },1000);
   },
-  stop() { clearInterval(this._iv); this._iv = null; },
-  skip() { this.stop(); this._hide(); },
-  _hide() { const r = document.getElementById('rest-timer'); if (r) r.remove(); },
-  _render() {
-    let r = document.getElementById('rest-timer');
-    if (!r) {
-      r = document.createElement('div'); r.id = 'rest-timer';
-      r.innerHTML = `<div><div class="rt-label">⏱ Descanso</div><div class="rt-time" id="rt-time"></div><div class="rt-bar"><div class="rt-fill" id="rt-fill"></div></div></div><button class="rt-skip" onclick="RestTimer.skip()">Saltar</button>`;
+  stop(){clearInterval(this._iv);this._iv=null;},
+  skip(){this.stop();this._hide();},
+  _hide(){const r=document.getElementById('rest-timer');if(r)r.remove();},
+  _render(){
+    let r=document.getElementById('rest-timer');
+    if(!r){
+      r=document.createElement('div');r.id='rest-timer';
+      r.innerHTML=`<div class="rt-info"><div class="rt-label">⏱ Descanso</div><div class="rt-time" id="rt-time"></div><div class="rt-bar"><div class="rt-fill" id="rt-fill"></div></div></div><button class="rt-skip" onclick="RestTimer.skip()">Saltar ›</button>`;
       document.body.appendChild(r);
     }
-    document.getElementById('rt-time').textContent = fmtTime(this._left);
-    const pct = (this._left / this._total) * 100;
-    document.getElementById('rt-fill').style.width = pct + '%';
+    document.getElementById('rt-time').textContent=fmtTime(this._left);
+    document.getElementById('rt-fill').style.width=(this._left/this._total*100)+'%';
   }
 };
 
-// ── MODAL (exercise picker) ───────────────────────────────────────────────────
-const Modal = {
-  _cb: null,
-  open(cb) {
-    this._cb = cb;
-    const overlay = document.getElementById('modal-overlay');
-    overlay.classList.remove('hidden');
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+const Modal={
+  _cb:null,_filter:'Todos',
+  open(cb){
+    this._cb=cb;this._filter='Todos';
+    document.getElementById('modal-overlay').classList.remove('hidden');
     this._render('');
-    qs('#modal-search').focus();
+    setTimeout(()=>qs('#modal-search')&&qs('#modal-search').focus(),100);
   },
-  close() {
-    document.getElementById('modal-overlay').classList.add('hidden');
-  },
-  pick(id) {
-    this.close();
-    if (this._cb) this._cb(id);
-  },
-  _render(q) {
-    const list = qs('#modal-list');
-    const filtered = EXERCISES.filter(e =>
-      !q || e.name.toLowerCase().includes(q.toLowerCase()) ||
-      e.cat.toLowerCase().includes(q.toLowerCase()) ||
-      e.muscles.some(m => m.toLowerCase().includes(q.toLowerCase()))
-    );
-    list.innerHTML = filtered.map(e => `
+  close(){document.getElementById('modal-overlay').classList.add('hidden');},
+  pick(id){this.close();if(this._cb)this._cb(id);},
+  setFilter(f){this._filter=f;this._render(qs('#modal-search').value||'');},
+  _render(q){
+    const list=qs('#modal-list');
+    if(!list)return;
+    const cats=['Todos','Pecho','Espalda','Hombros','Brazos','Piernas','Core','Cardio'];
+    const chips=cats.map(c=>`<div class="filter-chip${this._filter===c?' active':''}" onclick="Modal.setFilter('${c}')">${c}</div>`).join('');
+    const filtered=EXERCISES.filter(e=>(this._filter==='Todos'||e.cat===this._filter)&&(!q||e.name.toLowerCase().includes(q.toLowerCase())||e.muscles.some(m=>m.toLowerCase().includes(q.toLowerCase()))));
+    list.innerHTML=`<div class="filter-scroll" style="padding:0 16px 8px">${chips}</div>`+filtered.map(e=>`
       <div class="ex-item" onclick="Modal.pick('${e.id}')">
-        <div class="ex-avatar">${e.emoji}</div>
+        <div class="ex-avatar" style="background:${catColor(e.cat)}22;font-size:24px">${e.emoji}</div>
         <div class="ex-info">
           <div class="ex-name">${e.name}</div>
           <div class="ex-meta">${e.cat} · ${e.eq} · ${e.muscles[0]}</div>
         </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>`).join('');
   }
 };
 
+function catColor(cat){
+  return{Pecho:'#ef4444',Espalda:'#3b82f6',Hombros:'#8b5cf6',Brazos:'#f59e0b',Piernas:'#10b981',Core:'#06b6d4',Cardio:'#f97316'}[cat]||'#7c3aed';
+}
+
 // ── WORKOUT LOGIC ─────────────────────────────────────────────────────────────
-const Workout = {
-  _data: null,
-  start(template = null) {
-    this._data = template ? JSON.parse(JSON.stringify(template)) : {
-      id: Date.now().toString(),
-      name: 'Entrenamiento',
-      date: new Date().toISOString(),
-      exercises: []
-    };
-    this._data.id = Date.now().toString();
-    this._data.date = new Date().toISOString();
-    Store.setActive(this._data);
-    WorkoutTimer.start();
+const Workout={
+  _data:null,
+  start(template){
+    const w=template?JSON.parse(JSON.stringify(template)):{id:'',name:'Entrenamiento',date:'',exercises:[]};
+    w.id=Date.now().toString();
+    w.date=new Date().toISOString();
+    w._timerStart=Date.now();
+    this._data=w;
+    Store.setActive(w);
+    WorkoutTimer.start(w._timerStart);
     Router.go('active');
   },
-  load() {
-    const a = Store.getActive();
-    if (a) { this._data = a; WorkoutTimer.start(); }
-    return !!a;
+  load(){
+    const a=Store.getActive();
+    if(a){this._data=a;WorkoutTimer.start(a._timerStart||Date.now());return true;}
+    return false;
   },
-  get() { return this._data; },
-  save() { if (this._data) Store.setActive(this._data); },
-  addExercise(exId) {
-    const ex = getEx(exId);
-    if (!ex) return;
-    this._data.exercises.push({
-      exerciseId: exId, name: ex.name, emoji: ex.emoji,
-      muscles: ex.muscles,
-      sets: [{ reps: '', weight: '', type: 'normal', completed: false }]
-    });
-    this.save();
-    Views.activeWorkout();
+  get(){return this._data;},
+  save(){if(this._data){this._data._timerStart=WorkoutTimer.getStart();Store.setActive(this._data);}},
+  addExercise(exId){
+    const ex=getEx(exId);if(!ex)return;
+    const prev=this._getPrev(exId);
+    const defW=prev?prev.weight:'';
+    const defR=prev?prev.reps:'';
+    this._data.exercises.push({exerciseId:exId,name:ex.name,emoji:ex.emoji,muscles:ex.muscles,cat:ex.cat,
+      sets:[{reps:defR,weight:defW,type:'normal',completed:false}]});
+    this.save();Views.activeWorkout();
   },
-  addSet(exIdx) {
-    const ex = this._data.exercises[exIdx];
-    const last = ex.sets[ex.sets.length - 1] || {};
-    ex.sets.push({ reps: last.reps || '', weight: last.weight || '', type: 'normal', completed: false });
-    this.save();
-    Views.activeWorkout();
-  },
-  deleteSet(exIdx, setIdx) {
-    this._data.exercises[exIdx].sets.splice(setIdx, 1);
-    if (this._data.exercises[exIdx].sets.length === 0) {
-      this._data.exercises.splice(exIdx, 1);
+  _getPrev(exId){
+    for(const w of Store.getWorkouts()){
+      const ex=w.exercises.find(e=>e.exerciseId===exId);
+      if(ex){const done=ex.sets.filter(s=>s.completed&&s.weight);if(done.length)return done[done.length-1];}
     }
-    this.save();
-    Views.activeWorkout();
+    return null;
   },
-  updateSet(exIdx, setIdx, field, val) {
-    this._data.exercises[exIdx].sets[setIdx][field] = val;
+  addSet(ei){
+    const ex=this._data.exercises[ei];
+    const last=ex.sets[ex.sets.length-1]||{};
+    ex.sets.push({reps:last.reps||'',weight:last.weight||'',type:'normal',completed:false});
+    this.save();Views.activeWorkout();
+  },
+  removeSet(ei,si){
+    this._data.exercises[ei].sets.splice(si,1);
+    if(!this._data.exercises[ei].sets.length)this._data.exercises.splice(ei,1);
+    this.save();Views.activeWorkout();
+  },
+  removeExercise(ei){
+    this._data.exercises.splice(ei,1);
+    this.save();Views.activeWorkout();
+  },
+  updateSet(ei,si,field,val){
+    this._data.exercises[ei].sets[si][field]=val;
     this.save();
   },
-  toggleComplete(exIdx, setIdx) {
-    const s = this._data.exercises[exIdx].sets[setIdx];
-    s.completed = !s.completed;
+  toggleComplete(ei,si){
+    const s=this._data.exercises[ei].sets[si];
+    s.completed=!s.completed;
     this.save();
-    if (s.completed) {
-      const ex = this._data.exercises[exIdx];
-      const w = parseFloat(s.weight);
-      const r = parseInt(s.reps);
-      if (w && r) Store.updatePR(ex.exerciseId, w, r, new Date().toISOString());
+    if(s.completed){
+      const ex=this._data.exercises[ei];
+      const w=parseFloat(s.weight),r=parseInt(s.reps);
+      if(w&&r)Store.updatePR(ex.exerciseId,w,r,new Date().toISOString());
       RestTimer.start(Store.getSettings().restTime);
     }
-    // refresh row
-    const row = document.querySelector(`[data-set="${exIdx}-${setIdx}"]`);
-    if (row) {
-      row.classList.toggle('completed', s.completed);
-      const btn = row.querySelector('.set-complete-btn');
-      if (btn) btn.innerHTML = checkSVG();
-      const num = row.querySelector('.set-num');
-      if (num) num.style.background = s.completed ? 'var(--green)' : '';
+    const row=document.querySelector(`[data-row="${ei}-${si}"]`);
+    if(row){
+      row.classList.toggle('completed',s.completed);
+      const btn=row.querySelector('.set-check');
+      if(btn)btn.innerHTML=s.completed?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':'';
+      const num=row.querySelector('.set-num');
+      if(num)num.textContent=si+1;
     }
   },
-  finish() {
-    const w = this._data;
-    w.duration = WorkoutTimer.elapsed();
+  cycleType(ei,si){
+    const types=['normal','warmup','drop'];
+    const s=this._data.exercises[ei].sets[si];
+    s.type=types[(types.indexOf(s.type)+1)%types.length];
+    this.save();Views.activeWorkout();
+  },
+  rename(val){if(this._data){this._data.name=val;this.save();}},
+  finish(){
+    const w=this._data;
+    w.duration=WorkoutTimer.elapsed();
     WorkoutTimer.stop();
-    Store.saveWorkout(w);
-    Store.clearActive();
-    this._data = null;
+    Store.saveWorkout(w);Store.clearActive();
+    this._data=null;
     toast('¡Entrenamiento guardado! 💪');
     Router.reset('home');
   },
-  discard() {
-    WorkoutTimer.stop();
-    Store.clearActive();
-    this._data = null;
-    Router.reset('home');
+  discard(){
+    WorkoutTimer.stop();Store.clearActive();
+    this._data=null;Router.reset('home');
   }
 };
 
-// ── SVG ICONS ─────────────────────────────────────────────────────────────────
-const icons = {
-  home: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
-  dumbbell: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v16M18 4v16M6 8h12M6 16h12"/><rect x="2" y="6" width="4" height="12" rx="1"/><rect x="18" y="6" width="4" height="12" rx="1"/></svg>`,
-  list: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`,
-  chart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
-  person: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
-  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
-  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
-  chevron: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`,
-  back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`,
-  x: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
-  search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
-  fire: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c0 6-6 8-6 14a6 6 0 0 0 12 0c0-6-6-8-6-14z"/></svg>`,
-  trophy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4h10v6a5 5 0 0 1-10 0V4z"/><path d="M7 8H5a2 2 0 0 1-2-2V4h4"/><path d="M17 8h2a2 2 0 0 0 2-2V4h-4"/></svg>`,
-  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>`
-};
-function checkSVG() { return icons.check; }
-
-// ── VIEWS ─────────────────────────────────────────────────────────────────────
-const Views = {
-
-  home() {
-    const main = document.getElementById('main');
-    const workouts = Store.getWorkouts();
-    const active = Store.getActive();
-    const settings = Store.getSettings();
-    const streak = calcStreak(workouts);
-    const totalW = workouts.length;
-    const totalKg = workouts.reduce((s, w) => {
-      return s + w.exercises.reduce((s2, ex) => s2 + ex.sets.reduce((s3, set) => s3 + (set.completed ? (set.weight || 0) * (set.reps || 0) : 0), 0), 0);
-    }, 0);
-    const prs = Object.keys(Store.getPRs()).length;
-
-    const recentHTML = workouts.slice(0, 5).map(w => {
-      const exNames = w.exercises.slice(0, 3).map(e => e.name).join(', ');
-      return `<div class="workout-card" onclick="Views.workoutDetail('${w.id}')">
-        <div class="wc-icon">${icons.dumbbell}</div>
-        <div class="wc-info">
-          <div class="wc-name">${w.name}</div>
-          <div class="wc-meta">${exNames}${w.exercises.length > 3 ? ` +${w.exercises.length - 3}` : ''}</div>
-        </div>
-        <div class="wc-right">
-          <div class="wc-date">${daysAgo(w.date)}</div>
-          <div class="wc-vol">${totalVol(w.exercises, settings.unit)}</div>
-        </div>
-      </div>`;
-    }).join('') || `<div class="empty-state"><div class="es-icon">📋</div><h3>Sin historial</h3><p>Completa tu primer entrenamiento</p></div>`;
-
-    main.innerHTML = `
-      <div class="home-hero">
-        <div class="hero-greeting">Bienvenido de nuevo 👋</div>
-        <div class="hero-title">¡A entrenar!</div>
-        <div class="hero-streak">${icons.fire} ${streak} días de racha</div>
-      </div>
-
-      ${active ? `<div id="active-workout-bar" onclick="Router.go('active')">
-        <div class="awb-left"><div class="awb-dot"></div>
-          <div><div class="awb-name">${active.name}</div><div class="awb-time">En progreso</div></div>
-        </div><div class="awb-resume">Continuar</div>
-      </div>` : ''}
-
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-value">${totalW}</div><div class="stat-label">Entrenos</div></div>
-        <div class="stat-card"><div class="stat-value">${(totalKg / 1000).toFixed(1)}t</div><div class="stat-label">Volumen</div></div>
-        <div class="stat-card"><div class="stat-value">${prs}</div><div class="stat-label">PRs</div></div>
-      </div>
-
-      <div class="start-banner" onclick="Views.startEmpty()">
-        <div><h2>Iniciar Entreno</h2><p>Vacío o desde plantilla</p></div>
-        <div class="start-icon">🏋️</div>
-      </div>
-
-      <div class="section-header">
-        <div class="section-title">Historial</div>
-        <div class="section-link" onclick="Router.go('history')">Ver todo</div>
-      </div>
-      ${recentHTML}`;
-  },
-
-  startEmpty() {
-    if (Store.getActive()) {
-      if (!confirm('Ya tienes un entrenamiento activo. ¿Descartarlo?')) return;
-      Workout.discard(); return;
-    }
-    Workout.start();
-  },
-
-  workoutDetail(id) {
-    const w = Store.getWorkouts().find(x => x.id === id);
-    if (!w) return;
-    const main = document.getElementById('main');
-    const settings = Store.getSettings();
-    const exHTML = w.exercises.map(ex => {
-      const sets = ex.sets.filter(s => s.completed);
-      return `<div class="day-block" style="margin-bottom:10px">
-        <div class="day-header">${ex.emoji || '💪'} ${ex.name}</div>
-        ${sets.map((s, i) => `<div class="day-ex-row">
-          <div class="day-ex-name">Serie ${i + 1}</div>
-          <div class="day-ex-detail">${s.weight}${settings.unit} × ${s.reps} reps</div>
-        </div>`).join('')}
-      </div>`;
-    }).join('');
-    main.innerHTML = `
-      <div class="back-header"><div class="back-btn" onclick="Router.back()">${icons.back} Atrás</div></div>
-      <div style="padding:0 16px 8px">
-        <div style="font-size:22px;font-weight:800">${w.name}</div>
-        <div style="color:var(--text2);font-size:14px;margin-top:4px">${fmtDate(w.date)} · ${fmtTime(w.duration || 0)}</div>
-        <div style="margin-top:6px;color:var(--accent2);font-weight:600">${totalVol(w.exercises, settings.unit)} de volumen total</div>
-      </div>
-      <div style="padding:0 16px">${exHTML}</div>
-      <div style="padding:12px 16px">
-        <button class="btn btn-primary btn-block" onclick="Views.repeatWorkout('${w.id}')">🔁 Repetir entrenamiento</button>
-      </div>`;
-  },
-
-  repeatWorkout(id) {
-    const w = Store.getWorkouts().find(x => x.id === id);
-    if (!w) return;
-    const template = {
-      name: w.name,
-      exercises: w.exercises.map(ex => ({
-        ...ex,
-        sets: ex.sets.map(s => ({ ...s, completed: false }))
-      }))
-    };
-    Workout.start(template);
-  },
-
-  history() {
-    const workouts = Store.getWorkouts();
-    const settings = Store.getSettings();
-    const main = document.getElementById('main');
-    const list = workouts.map(w => `
-      <div class="workout-card" onclick="Views.workoutDetail('${w.id}')">
-        <div class="wc-icon">${icons.dumbbell}</div>
-        <div class="wc-info">
-          <div class="wc-name">${w.name}</div>
-          <div class="wc-meta">${w.exercises.length} ejercicios · ${fmtTime(w.duration || 0)}</div>
-        </div>
-        <div class="wc-right">
-          <div class="wc-date">${fmtDate(w.date)}</div>
-          <div class="wc-vol">${totalVol(w.exercises, settings.unit)}</div>
-        </div>
-      </div>`).join('') || `<div class="empty-state"><div class="es-icon">📋</div><h3>Sin historial</h3><p>Completa tu primer entrenamiento para verlo aquí</p></div>`;
-    main.innerHTML = `
-      <div class="page-header"><div><div class="page-title">Historial</div></div>
-      <div class="back-btn" onclick="Router.back()">${icons.back}</div></div>
-      ${list}`;
-  },
-
-  activeWorkout() {
-    const w = Workout.get();
-    if (!w) { Router.reset('home'); return; }
-    const main = document.getElementById('main');
-    const settings = Store.getSettings();
-
-    const exBlocks = w.exercises.map((ex, ei) => {
-      const rows = ex.sets.map((s, si) => `
-        <tr class="set-row ${s.completed ? 'completed' : ''}" data-set="${ei}-${si}">
-          <td><span class="set-num">${si + 1}</span></td>
-          <td><button class="set-type-btn ${s.type !== 'normal' ? s.type : ''}"
-            onclick="cycleType(${ei},${si})">${s.type === 'warmup' ? 'W' : s.type === 'drop' ? 'D' : 'N'}</button></td>
-          <td><input class="set-input" type="number" inputmode="decimal" placeholder="0"
-            value="${s.weight}" onchange="Workout.updateSet(${ei},${si},'weight',this.value)"
-            onfocus="this.select()"></td>
-          <td><input class="set-input" type="number" inputmode="numeric" placeholder="0"
-            value="${s.reps}" onchange="Workout.updateSet(${ei},${si},'reps',this.value)"
-            onfocus="this.select()"></td>
-          <td><button class="set-complete-btn" onclick="Workout.toggleComplete(${ei},${si})">${icons.check}</button></td>
-        </tr>`).join('');
-
-      const completedSets = ex.sets.filter(s => s.completed).length;
-      return `<div class="exercise-block">
-        <div class="ex-block-header">
-          <div>
-            <div class="ex-block-name">${ex.emoji || '💪'} ${ex.name}</div>
-            <div class="ex-block-muscle">${(ex.muscles || []).join(', ')} · ${completedSets}/${ex.sets.length} series</div>
-          </div>
-          <button class="btn btn-icon" onclick="removeExercise(${ei})" style="background:transparent;color:var(--text3)">${icons.trash}</button>
-        </div>
-        <table class="sets-table">
-          <thead><tr>
-            <th>#</th><th>Tipo</th><th>${settings.unit}</th><th>Reps</th><th>✓</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-        <button class="add-set-btn" onclick="Workout.addSet(${ei})">${icons.plus} Añadir serie</button>
-      </div>`;
-    }).join('');
-
-    main.innerHTML = `
-      <div class="aw-header">
-        <input class="aw-title" id="aw-name" value="${w.name}"
-          onchange="w_rename(this.value)" placeholder="Nombre del entrenamiento">
-        <div id="aw-timer" class="aw-timer">${fmtTime(WorkoutTimer.elapsed())}</div>
-      </div>
-      ${exBlocks}
-      <button class="add-exercise-btn" onclick="Modal.open(id => Workout.addExercise(id))">
-        ${icons.plus} Añadir ejercicio
-      </button>
-      <div class="finish-btn-wrap">
-        <button class="btn btn-green btn-block" onclick="confirmFinish()">Finalizar entrenamiento</button>
-        <button class="btn btn-danger btn-block" style="margin-top:8px" onclick="confirmDiscard()">Descartar</button>
-      </div>`;
-  },
-
-  exercises(filter = 'Todos') {
-    const cats = ['Todos', 'Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core', 'Cardio'];
-    const catES = { Todos:'Todos', Chest:'Pecho', Back:'Espalda', Shoulders:'Hombros', Arms:'Brazos', Legs:'Piernas', Core:'Core', Cardio:'Cardio' };
-    const main = document.getElementById('main');
-
-    const chips = cats.map(c => `<div class="filter-chip ${filter === c ? 'active' : ''}"
-      onclick="Views.exercises('${c}')">${catES[c]}</div>`).join('');
-
-    const list = EXERCISES
-      .filter(e => filter === 'Todos' || e.cat === filter)
-      .map(e => {
-        const pr = Store.getPRs()[e.id];
-        return `<div class="ex-item" onclick="Views.exerciseDetail('${e.id}')">
-          <div class="ex-avatar">${e.emoji}</div>
-          <div class="ex-info">
-            <div class="ex-name">${e.name}</div>
-            <div class="ex-meta">${e.cat} · ${e.eq} · ${e.muscles[0]}</div>
-            ${pr ? `<div style="font-size:11px;color:var(--green);margin-top:1px">PR: ${pr.weight}${Store.getSettings().unit} × ${pr.reps}</div>` : ''}
-          </div>
-          <div class="ex-chevron">${icons.chevron}</div>
-        </div>`;
-      }).join('');
-
-    main.innerHTML = `
-      <div class="search-bar">
-        <div class="page-title" style="margin-bottom:10px">Ejercicios</div>
-        <div class="search-wrap">
-          <span class="search-icon">${icons.search}</span>
-          <input class="search-input" id="ex-search" placeholder="Buscar ejercicio…"
-            oninput="searchExercises(this.value, '${filter}')">
-        </div>
-      </div>
-      <div class="filter-scroll">${chips}</div>
-      <div class="exercise-list" id="ex-list">${list}</div>`;
-  },
-
-  exerciseDetail(id) {
-    const ex = getEx(id);
-    if (!ex) return;
-    const main = document.getElementById('main');
-    const pr = Store.getPRs()[id];
-    const settings = Store.getSettings();
-    const history = Store.getWorkouts()
-      .filter(w => w.exercises.some(e => e.exerciseId === id))
-      .slice(0, 5);
-
-    const histHTML = history.map(w => {
-      const exData = w.exercises.find(e => e.exerciseId === id);
-      const best = exData.sets.filter(s => s.completed).reduce((b, s) => (!b || s.weight > b.weight) ? s : b, null);
-      return `<div class="day-ex-row" style="padding:10px 0;border-bottom:1px solid var(--border)">
-        <div class="day-ex-name">${daysAgo(w.date)}</div>
-        <div class="day-ex-detail">${best ? `${best.weight}${settings.unit} × ${best.reps}` : '—'}</div>
-      </div>`;
-    }).join('');
-
-    main.innerHTML = `
-      <div class="back-header"><div class="back-btn" onclick="Router.back()">${icons.back} Atrás</div></div>
-      <div class="ex-detail-hero">${ex.emoji}</div>
-      <div style="padding:0 16px 4px">
-        <div style="font-size:24px;font-weight:800">${ex.name}</div>
-        <div style="color:var(--text2);font-size:14px;margin-top:4px">${ex.eq}</div>
-      </div>
-      <div class="muscle-tags">${ex.muscles.map(m => `<span class="muscle-tag">${m}</span>`).join('')}</div>
-      ${pr ? `<div class="pr-badge">${icons.trophy} PR: ${pr.weight}${settings.unit} × ${pr.reps} reps</div>` : ''}
-      <div class="card">
-        <div class="card-title">Historial reciente</div>
-        ${histHTML || '<div style="color:var(--text3);font-size:14px">Sin historial</div>'}
-      </div>
-      <div style="padding:0 16px 20px">
-        <button class="btn btn-primary btn-block" onclick="addToActive('${id}')">
-          ${icons.plus} Añadir al entrenamiento
-        </button>
-      </div>`;
-  },
-
-  programs() {
-    const main = document.getElementById('main');
-    const activeP = Store.getProgram();
-    const html = PROGRAMS.map(p => `
-      <div class="program-card" onclick="Views.programDetail('${p.id}')">
-        <div class="pc-banner" style="background:linear-gradient(135deg,${p.color}33,${p.color}11)">${p.emoji}</div>
-        <div class="pc-body">
-          <div class="pc-name">${p.name}</div>
-          <div class="pc-desc">${p.desc}</div>
-          <div class="pc-badges">
-            <span class="badge badge-level">${p.level}</span>
-            <span class="badge badge-days">${p.daysPerWeek}d/semana</span>
-            <span class="badge" style="background:rgba(255,255,255,.08);color:var(--text2)">${p.duration}</span>
-            ${activeP && activeP.id === p.id ? '<span class="badge badge-active">Activo</span>' : ''}
-          </div>
-        </div>
-      </div>`).join('');
-    main.innerHTML = `<div class="page-header"><div class="page-title">Programas</div></div>${html}`;
-  },
-
-  programDetail(id) {
-    const p = PROGRAMS.find(x => x.id === id);
-    if (!p) return;
-    const main = document.getElementById('main');
-    const activeP = Store.getProgram();
-    const isActive = activeP && activeP.id === id;
-
-    const daysHTML = p.days.map((d, di) => {
-      const exRows = d.exercises.map(e => {
-        const ex = getEx(e.id);
-        return `<div class="day-ex-row">
-          <div>
-            <div class="day-ex-name">${ex ? ex.name : e.id}</div>
-            <div class="day-ex-detail">${e.sets} series × ${e.reps} reps · ${e.rest}s descanso</div>
-          </div>
-          <div style="font-size:20px">${ex ? ex.emoji : '💪'}</div>
-        </div>`;
-      }).join('');
-      return `<div class="day-block">
-        <div class="day-header"><span>Día ${di + 1}: ${d.name}</span>
-          <button class="btn btn-sm btn-outline" onclick="startProgramDay('${id}',${di})">Iniciar</button>
-        </div>${exRows}
-      </div>`;
-    }).join('');
-
-    main.innerHTML = `
-      <div class="back-header"><div class="back-btn" onclick="Router.back()">${icons.back} Atrás</div></div>
-      <div class="pc-banner" style="height:120px;background:linear-gradient(135deg,${p.color}55,${p.color}22);font-size:60px;display:flex;align-items:center;justify-content:center;margin:0 16px;border-radius:var(--r)">${p.emoji}</div>
-      <div style="padding:14px 16px">
-        <div style="font-size:24px;font-weight:800">${p.name}</div>
-        <div style="color:var(--text2);font-size:14px;margin-top:6px">${p.desc}</div>
-        <div class="pc-badges" style="margin-top:10px">
-          <span class="badge badge-level">${p.level}</span>
-          <span class="badge badge-days">${p.daysPerWeek}d/semana</span>
-          <span class="badge" style="background:rgba(255,255,255,.08);color:var(--text2)">${p.duration}</span>
-        </div>
-      </div>
-      <div style="padding:0 16px 14px">
-        <button class="btn btn-block ${isActive ? 'btn-danger' : 'btn-primary'}" onclick="${isActive ? 'stopProgram()' : `startProgram('${id}')`}">
-          ${isActive ? '⛔ Dejar programa' : '🚀 Iniciar programa'}
-        </button>
-      </div>
-      ${daysHTML}
-      <div style="height:20px"></div>`;
-  },
-
-  progress() {
-    const workouts = Store.getWorkouts();
-    const prs = Store.getPRs();
-    const settings = Store.getSettings();
-    const main = document.getElementById('main');
-
-    const prRows = Object.entries(prs).map(([id, pr]) => {
-      const ex = getEx(id);
-      return `<div class="pr-row">
-        <div class="pr-ex">${ex ? ex.name : id}</div>
-        <div class="text-right">
-          <div class="pr-val">${pr.weight}${settings.unit} × ${pr.reps}</div>
-          <div class="pr-date">${fmtDate(pr.date)}</div>
-        </div>
-      </div>`;
-    }).join('') || '<div style="color:var(--text3);font-size:14px;padding:12px 0">Completa entrenamientos para ver tus PRs</div>';
-
-    // last 30 days workout frequency
-    const today = new Date(); today.setHours(0,0,0,0);
-    const cells = Array.from({length:30}, (_,i) => {
-      const d = new Date(today); d.setDate(d.getDate() - (29 - i));
-      const iso = d.toISOString().slice(0,10);
-      const has = workouts.some(w => w.date.slice(0,10) === iso);
-      const isToday = i === 29;
-      return `<div class="week-cell ${has ? 'has-workout' : ''} ${isToday ? 'today' : ''}" title="${iso}"></div>`;
-    }).join('');
-
-    const volumeByWeek = getLast8WeeksVolume(workouts);
-
-    main.innerHTML = `
-      <div class="page-header"><div class="page-title">Progreso</div></div>
-
-      <div class="card">
-        <div class="card-title">Últimos 30 días</div>
-        <div class="week-grid">${cells}</div>
-        <div style="margin-top:10px;font-size:13px;color:var(--text2)">${workouts.filter(w => {
-          const d = new Date(w.date); const now = new Date();
-          return (now - d) < 30 * 86400000;
-        }).length} entrenamientos este mes</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Volumen semanal (${settings.unit})</div>
-        <canvas id="vol-chart" height="120"></canvas>
-      </div>
-
-      <div class="card">
-        <div class="card-title">${icons.trophy} Récords personales</div>
-        ${prRows}
-      </div>`;
-
-    drawVolumeChart('vol-chart', volumeByWeek);
-  },
-
-  profile() {
-    const s = Store.getSettings();
-    const main = document.getElementById('main');
-    main.innerHTML = `
-      <div class="page-header"><div class="page-title">Perfil</div></div>
-      <div style="text-align:center;padding:20px 0">
-        <div class="profile-avatar">🏋️</div>
-        <div style="font-size:20px;font-weight:700">Mi Perfil</div>
-        <div style="color:var(--text2);font-size:14px;margin-top:4px">${Store.getWorkouts().length} entrenos completados</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Configuración</div>
-        <div class="setting-row">
-          <div class="setting-label">Unidad de peso</div>
-          <div class="setting-value">
-            <button class="select-btn" onclick="toggleUnit()">${s.unit}</button>
-          </div>
-        </div>
-        <div class="setting-row">
-          <div class="setting-label">Tiempo de descanso</div>
-          <div class="setting-value">
-            <button class="select-btn" onclick="cycleRest()">${s.restTime}s</button>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Datos</div>
-        <div class="setting-row">
-          <div class="setting-label">Borrar todos los datos</div>
-          <button class="btn btn-danger btn-sm" onclick="clearAllData()">Borrar</button>
-        </div>
-      </div>
-      <div style="padding:20px 16px;text-align:center;color:var(--text3);font-size:13px">
-        GymTracker v1.0 · Lyfta Clone<br>Hecho con 💜 para iPhone
-      </div>`;
-  }
-};
-
-// ── HELPER FUNCTIONS ─────────────────────────────────────────────────────────
-function calcStreak(workouts) {
-  if (!workouts.length) return 0;
-  let streak = 0;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const dates = [...new Set(workouts.map(w => w.date.slice(0,10)))].sort().reverse();
-  let cur = new Date(today);
-  for (const d of dates) {
-    const wd = new Date(d);
-    const diff = Math.round((cur - wd) / 86400000);
-    if (diff <= 1) { streak++; cur = wd; }
-    else break;
-  }
-  return streak;
+// ── MUSCLE SVG ────────────────────────────────────────────────────────────────
+function muscleSVG(active=[]){
+  const hi=m=>active.includes(m)?'var(--accent)':'#2a2a2a';
+  const stroke=m=>active.includes(m)?'var(--accent2)':'#444';
+  return `<svg viewBox="0 0 200 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:180px">
+    <!-- Cabeza -->
+    <ellipse cx="100" cy="28" rx="18" ry="22" fill="#1e1e1e" stroke="#444" stroke-width="1.5"/>
+    <!-- Cuello -->
+    <rect x="93" y="48" width="14" height="14" rx="4" fill="#1e1e1e" stroke="#444" stroke-width="1"/>
+    <!-- HOMBROS -->
+    <ellipse cx="68" cy="74" rx="16" ry="12" fill="${hi('hombros')}" stroke="${stroke('hombros')}" stroke-width="1.5"/>
+    <ellipse cx="132" cy="74" rx="16" ry="12" fill="${hi('hombros')}" stroke="${stroke('hombros')}" stroke-width="1.5"/>
+    <!-- PECHO -->
+    <path d="M84 62 Q100 58 116 62 L118 92 Q100 98 82 92 Z" fill="${hi('pecho')}" stroke="${stroke('pecho')}" stroke-width="1.5"/>
+    <!-- TRÍCEPS (espalda brazo) -->
+    <path d="M55 78 Q46 86 47 108 Q52 116 57 110 L60 88 Z" fill="${hi('triceps')}" stroke="${stroke('triceps')}" stroke-width="1.5"/>
+    <path d="M145 78 Q154 86 153 108 Q148 116 143 110 L140 88 Z" fill="${hi('triceps')}" stroke="${stroke('triceps')}" stroke-width="1.5"/>
+    <!-- BÍCEPS -->
+    <path d="M60 88 Q52 96 53 112 Q58 120 63 114 L66 96 Z" fill="${hi('biceps')}" stroke="${stroke('biceps')}" stroke-width="1.5"/>
+    <path d="M140 88 Q148 96 147 112 Q142 120 137 114 L134 96 Z" fill="${hi('biceps')}" stroke="${stroke('biceps')}" stroke-width="1.5"/>
+    <!-- Antebrazos -->
+    <path d="M53 112 Q48 128 52 142 Q57 148 62 142 L63 114 Z" fill="#1e1e1e" stroke="#444" stroke-width="1"/>
+    <path d="M147 112 Q152 128 148 142 Q143 148 138 142 L137 114 Z" fill="#1e1e1e" stroke="#444" stroke-width="1"/>
+    <!-- ABDOMINALES -->
+    <rect x="88" y="94" width="24" height="12" rx="3" fill="${hi('abs')}" stroke="${stroke('abs')}" stroke-width="1.5"/>
+    <rect x="88" y="110" width="24" height="12" rx="3" fill="${hi('abs')}" stroke="${stroke('abs')}" stroke-width="1.5"/>
+    <rect x="88" y="126" width="24" height="12" rx="3" fill="${hi('abs')}" stroke="${stroke('abs')}" stroke-width="1.5"/>
+    <!-- ESPALDA (detrás - representado como borde) -->
+    <path d="M84 62 Q72 66 72 86 L82 92 Q84 72 100 70 Q116 72 118 92 L128 86 Q128 66 116 62 Q100 58 84 62Z" fill="${hi('espalda')}" stroke="${stroke('espalda')}" stroke-width="1.5" opacity="0.7"/>
+    <!-- Cadera -->
+    <path d="M82 140 Q70 148 70 162 L130 162 Q130 148 118 140Z" fill="#1e1e1e" stroke="#444" stroke-width="1"/>
+    <!-- CUÁDRICEPS -->
+    <path d="M70 162 Q62 180 64 210 Q70 222 78 214 L82 180 L82 162Z" fill="${hi('cuadriceps')}" stroke="${stroke('cuadriceps')}" stroke-width="1.5"/>
+    <path d="M130 162 Q138 180 136 210 Q130 222 122 214 L118 180 L118 162Z" fill="${hi('cuadriceps')}" stroke="${stroke('cuadriceps')}" stroke-width="1.5"/>
+    <!-- ISQUIOTIBIALES (visible en la parte posterior) -->
+    <path d="M74 214 Q70 234 72 254 Q78 264 84 256 L86 224 Q82 218 78 214Z" fill="${hi('isquiotibiales')}" stroke="${stroke('isquiotibiales')}" stroke-width="1.5"/>
+    <path d="M126 214 Q130 234 128 254 Q122 264 116 256 L114 224 Q118 218 122 214Z" fill="${hi('isquiotibiales')}" stroke="${stroke('isquiotibiales')}" stroke-width="1.5"/>
+    <!-- GLÚTEOS -->
+    <ellipse cx="83" cy="170" rx="14" ry="18" fill="${hi('gluteos')}" stroke="${stroke('gluteos')}" stroke-width="1.5"/>
+    <ellipse cx="117" cy="170" rx="14" ry="18" fill="${hi('gluteos')}" stroke="${stroke('gluteos')}" stroke-width="1.5"/>
+    <!-- Rodillas -->
+    <ellipse cx="78" cy="258" rx="10" ry="8" fill="#1e1e1e" stroke="#444" stroke-width="1"/>
+    <ellipse cx="122" cy="258" rx="10" ry="8" fill="#1e1e1e" stroke="#444" stroke-width="1"/>
+    <!-- Espinillas -->
+    <path d="M68 266 Q66 294 68 316 Q74 324 82 320 L84 290 L80 266Z" fill="#1e1e1e" stroke="#444" stroke-width="1"/>
+    <path d="M132 266 Q134 294 132 316 Q126 324 118 320 L116 290 L120 266Z" fill="#1e1e1e" stroke="#444" stroke-width="1"/>
+    <!-- GEMELOS -->
+    <path d="M64 266 Q58 284 60 306 Q66 318 74 312 L76 284 Q70 274 68 266Z" fill="${hi('gemelos')}" stroke="${stroke('gemelos')}" stroke-width="1.5"/>
+    <path d="M136 266 Q142 284 140 306 Q134 318 126 312 L124 284 Q130 274 132 266Z" fill="${hi('gemelos')}" stroke="${stroke('gemelos')}" stroke-width="1.5"/>
+    <!-- Pies -->
+    <ellipse cx="70" cy="320" rx="12" ry="7" fill="#1e1e1e" stroke="#444" stroke-width="1"/>
+    <ellipse cx="130" cy="320" rx="12" ry="7" fill="#1e1e1e" stroke="#444" stroke-width="1"/>
+    <!-- LUMBAR -->
+    <rect x="88" y="140" width="24" height="20" rx="4" fill="${hi('lumbar')}" stroke="${stroke('lumbar')}" stroke-width="1.5"/>
+  </svg>`;
 }
 
-function getLast8WeeksVolume(workouts) {
-  const weeks = Array(8).fill(0);
-  const now = Date.now();
-  workouts.forEach(w => {
-    const daysAgo = Math.floor((now - new Date(w.date)) / 86400000);
-    const weekIdx = Math.floor(daysAgo / 7);
-    if (weekIdx < 8) {
-      weeks[7 - weekIdx] += w.exercises.reduce((s, ex) =>
-        s + ex.sets.reduce((s2, set) => s2 + (set.completed ? (set.weight||0)*(set.reps||0) : 0), 0), 0);
-    }
+// ── VIEWS: HOME ───────────────────────────────────────────────────────────────
+const Views={
+  home(){
+    const workouts=Store.getWorkouts(),active=Store.getActive(),s=Store.getSettings();
+    const streak=calcStreak(workouts),prs=Object.keys(Store.getPRs()).length;
+    const totalKg=workouts.reduce((a,w)=>a+w.exercises.reduce((b,ex)=>b+ex.sets.reduce((c,s)=>c+(s.completed?(+s.weight||0)*(+s.reps||0):0),0),0),0);
+    const prog=Store.getProgram();
+    const progBanner=prog?`<div class="prog-active-banner" onclick="Router.go('programs')">
+      <div>🎯 <strong>${PROGRAMS.find(p=>p.id===prog.id)?.name||'Programa'}</strong> activo</div>
+      <div style="font-size:12px;color:var(--accent2)">Ver programa ›</div>
+    </div>`:'';
+    const recent=workouts.slice(0,5).map(w=>`
+      <div class="history-card" onclick="Views.workoutDetail('${w.id}')">
+        <div class="hc-icon" style="background:${catColor('Pecho')}22">🏋️</div>
+        <div class="hc-info">
+          <div class="hc-name">${w.name}</div>
+          <div class="hc-meta">${w.exercises.map(e=>e.name).slice(0,2).join(', ')}${w.exercises.length>2?` +${w.exercises.length-2} más`:''}</div>
+        </div>
+        <div class="hc-right">
+          <div class="hc-date">${daysAgo(w.date)}</div>
+          <div class="hc-vol">${totalVol(w.exercises,s.unit)}</div>
+        </div>
+      </div>`).join('')||`<div class="empty-state"><div class="es-icon">🏋️</div><h3>Sin historial aún</h3><p>Completa tu primer entrenamiento</p></div>`;
+    document.getElementById('main').innerHTML=`
+      <div class="home-header">
+        <div>
+          <div class="home-greeting">Buenas, ${s.name} 👋</div>
+          <div class="home-date">${new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</div>
+        </div>
+        <div class="streak-badge">🔥 ${streak}</div>
+      </div>
+      ${active?`<div class="active-banner" onclick="Router.go('active')">
+        <div class="ab-dot"></div>
+        <div class="ab-info"><div class="ab-name">${active.name}</div><div class="ab-sub">Entrenamiento en curso</div></div>
+        <div class="ab-btn">Continuar ›</div>
+      </div>`:''}
+      ${progBanner}
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-val">${workouts.length}</div><div class="stat-lbl">Entrenos</div></div>
+        <div class="stat-box"><div class="stat-val">${totalKg>=1000?(totalKg/1000).toFixed(1)+'t':totalKg+'kg'}</div><div class="stat-lbl">Volumen</div></div>
+        <div class="stat-box"><div class="stat-val">${prs}</div><div class="stat-lbl">PRs</div></div>
+      </div>
+      <div class="start-btn-wrap">
+        <button class="btn-start" onclick="startEmpty()">
+          <div class="start-btn-icon">＋</div>
+          <div><div style="font-size:17px;font-weight:700">Iniciar Entrenamiento</div><div style="font-size:13px;opacity:.7;margin-top:2px">Vacío o desde programa</div></div>
+        </button>
+      </div>
+      <div class="section-row"><div class="section-ttl">Historial reciente</div><div class="section-link" onclick="Router.go('history')">Ver todo ›</div></div>
+      ${recent}`;
+  },
+
+  workoutDetail(id){
+    const w=Store.getWorkouts().find(x=>x.id===id);if(!w)return;
+    const s=Store.getSettings();
+    const main=document.getElementById('main');
+    main.innerHTML=`
+      <div class="subpage-header">
+        <button class="back-btn" onclick="Router.back()">‹ Atrás</button>
+        <div class="subpage-title">${w.name}</div>
+      </div>
+      <div style="padding:0 16px 12px">
+        <div style="color:var(--text2);font-size:14px">${fmtDate(w.date)} · ⏱ ${fmtTime(w.duration||0)} · ${totalVol(w.exercises,s.unit)}</div>
+      </div>
+      ${w.exercises.map(ex=>`
+        <div class="card" style="margin-bottom:10px">
+          <div style="font-size:15px;font-weight:700;margin-bottom:8px">${ex.emoji||'💪'} ${ex.name}</div>
+          ${ex.sets.filter(s=>s.completed).map((s,i)=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);font-size:14px"><span>Serie ${i+1}</span><span style="color:var(--accent2);font-weight:600">${s.weight}${Store.getSettings().unit} × ${s.reps}</span></div>`).join('')}
+        </div>`).join('')}
+      <div style="padding:12px 16px 24px">
+        <button class="btn btn-primary btn-block" onclick="repeatWorkout('${id}')">🔁 Repetir este entrenamiento</button>
+      </div>`;
+  },
+
+  history(){
+    const workouts=Store.getWorkouts(),s=Store.getSettings();
+    const main=document.getElementById('main');
+    const list=workouts.map(w=>`
+      <div class="history-card" onclick="Views.workoutDetail('${w.id}')">
+        <div class="hc-icon">🏋️</div>
+        <div class="hc-info">
+          <div class="hc-name">${w.name}</div>
+          <div class="hc-meta">${w.exercises.length} ejercicios · ${fmtTime(w.duration||0)}</div>
+        </div>
+        <div class="hc-right">
+          <div class="hc-date">${fmtDate(w.date)}</div>
+          <div class="hc-vol">${totalVol(w.exercises,s.unit)}</div>
+        </div>
+      </div>`).join('')||`<div class="empty-state"><div class="es-icon">📋</div><h3>Sin historial</h3><p>Completa tu primer entrenamiento</p></div>`;
+    main.innerHTML=`<div class="subpage-header"><button class="back-btn" onclick="Router.back()">‹ Atrás</button><div class="subpage-title">Historial</div></div>${list}`;
+  }
+};
+
+// ── VIEW: ACTIVE WORKOUT ──────────────────────────────────────────────────────
+Views.activeWorkout=function(){
+  const w=Workout.get();if(!w){Router.reset('home');return;}
+  const s=Store.getSettings();
+  const blocks=w.exercises.map((ex,ei)=>{
+    const prev=Workout._getPrev(ex.exerciseId);
+    const rows=ex.sets.map((set,si)=>{
+      const prevText=prev?`${prev.weight}${s.unit}×${prev.reps}`:'—';
+      const typeLabel={normal:'N',warmup:'W',drop:'D'}[set.type]||'N';
+      const typeClass={normal:'',warmup:'type-w',drop:'type-d'}[set.type]||'';
+      return `<div class="set-row${set.completed?' completed':''}" data-row="${ei}-${si}">
+        <div class="set-num">${si+1}</div>
+        <div class="set-prev">${prevText}</div>
+        <button class="set-type ${typeClass}" onclick="Workout.cycleType(${ei},${si})">${typeLabel}</button>
+        <input class="set-inp" type="number" inputmode="decimal" placeholder="${s.unit}" value="${set.weight}"
+          onchange="Workout.updateSet(${ei},${si},'weight',this.value)" onfocus="this.select()">
+        <input class="set-inp" type="number" inputmode="numeric" placeholder="reps" value="${set.reps}"
+          onchange="Workout.updateSet(${ei},${si},'reps',this.value)" onfocus="this.select()">
+        <button class="set-check${set.completed?' done':''}" onclick="Workout.toggleComplete(${ei},${si})">
+          ${set.completed?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':''}
+        </button>
+      </div>`;}).join('');
+    const done=ex.sets.filter(s=>s.completed).length;
+    return `<div class="ex-block">
+      <div class="ex-block-hdr">
+        <div class="ex-block-icon" style="background:${catColor(ex.cat||'Pecho')}22">${ex.emoji||'💪'}</div>
+        <div class="ex-block-info">
+          <div class="ex-block-name">${ex.name}</div>
+          <div class="ex-block-sub">${(ex.muscles||[]).slice(0,2).join(' · ')} · ${done}/${ex.sets.length} series</div>
+        </div>
+        <button class="ex-block-del" onclick="Workout.removeExercise(${ei})">🗑</button>
+      </div>
+      <div class="sets-hdr">
+        <span>#</span><span>Anterior</span><span>Tipo</span><span>${s.unit}</span><span>Reps</span><span>✓</span>
+      </div>
+      ${rows}
+      <button class="add-set-btn" onclick="Workout.addSet(${ei})">+ Añadir serie</button>
+    </div>`;}).join('');
+
+  document.getElementById('main').innerHTML=`
+    <div class="aw-top">
+      <button class="aw-back" onclick="Router.reset('home')">‹</button>
+      <input class="aw-name" value="${w.name}" onchange="Workout.rename(this.value)" placeholder="Nombre">
+      <div class="aw-clock" id="aw-timer">${fmtTime(WorkoutTimer.elapsed())}</div>
+    </div>
+    ${blocks}
+    <button class="add-ex-btn" onclick="Modal.open(id=>Workout.addExercise(id))">
+      <span style="font-size:22px">＋</span> Añadir ejercicio
+    </button>
+    <div style="padding:12px 16px 8px">
+      <button class="btn btn-green btn-block" onclick="confirmFinish()">✓ Finalizar entrenamiento</button>
+      <button class="btn btn-danger btn-block" style="margin-top:8px" onclick="confirmDiscard()">✕ Descartar</button>
+    </div>`;
+  document.getElementById('main').scrollTo(0,document.getElementById('main').scrollHeight);
+};
+
+// ── VIEW: EXERCISES ───────────────────────────────────────────────────────────
+Views.exercises=function(filter){
+  filter=filter||'Todos';
+  const cats=['Todos','Pecho','Espalda','Hombros','Brazos','Piernas','Core','Cardio'];
+  const chips=cats.map(c=>`<button class="fchip${filter===c?' active':''}" onclick="Views.exercises('${c}')">${c}</button>`).join('');
+  const s=Store.getSettings();
+  const list=EXERCISES.filter(e=>filter==='Todos'||e.cat===filter).map(e=>{
+    const pr=Store.getPRs()[e.id];
+    return `<div class="ex-row" onclick="Views.exerciseDetail('${e.id}')">
+      <div class="ex-row-icon" style="background:${catColor(e.cat)}22">${e.emoji}</div>
+      <div class="ex-row-info">
+        <div class="ex-row-name">${e.name}</div>
+        <div class="ex-row-meta">${e.eq} · ${e.muscles[0]}</div>
+        ${pr?`<div class="ex-row-pr">PR: ${pr.weight}${s.unit} × ${pr.reps} reps</div>`:''}
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`;}).join('');
+  document.getElementById('main').innerHTML=`
+    <div class="page-hdr"><div class="page-ttl">Ejercicios</div><div style="color:var(--text3);font-size:13px">${EXERCISES.filter(e=>filter==='Todos'||e.cat===filter).length} ejercicios</div></div>
+    <div class="search-wrap" style="padding:0 16px 10px">
+      <div class="search-box">
+        <span class="search-ico">🔍</span>
+        <input class="search-inp" placeholder="Buscar ejercicio…" oninput="searchEx(this.value,'${filter}')">
+      </div>
+    </div>
+    <div class="fchips">${chips}</div>
+    <div id="ex-list">${list}</div>`;
+};
+
+Views.exerciseDetail=function(id){
+  const ex=getEx(id);if(!ex)return;
+  const pr=Store.getPRs()[id];
+  const s=Store.getSettings();
+  const history=Store.getWorkouts().filter(w=>w.exercises.some(e=>e.exerciseId===id)).slice(0,5);
+  const color=catColor(ex.cat);
+  const histHTML=history.map(w=>{
+    const exd=w.exercises.find(e=>e.exerciseId===id);
+    const best=exd.sets.filter(s=>s.completed&&s.weight).reduce((b,s)=>(!b||+s.weight>+b.weight)?s:b,null);
+    return `<div class="hist-row"><span>${daysAgo(w.date)}</span><span style="color:var(--accent2);font-weight:600">${best?`${best.weight}${s.unit} × ${best.reps} reps`:'Sin datos'}</span></div>`;
+  }).join('')||'<div style="color:var(--text3);font-size:14px;padding:8px 0">Sin historial todavía</div>';
+  const stepsHTML=ex.steps?ex.steps.map((st,i)=>`<div class="step-row"><div class="step-num">${i+1}</div><div class="step-txt">${st}</div></div>`).join(''):'';
+  const ytUrl=`https://www.youtube.com/results?search_query=${encodeURIComponent(ex.ytSearch||ex.name)}`;
+  document.getElementById('main').innerHTML=`
+    <div class="subpage-header">
+      <button class="back-btn" onclick="Router.back()">‹ Atrás</button>
+      <div class="subpage-title">${ex.cat}</div>
+    </div>
+    <div class="ex-hero" style="background:linear-gradient(135deg,${color}33,${color}11)">
+      <div class="ex-hero-emoji">${ex.emoji}</div>
+      <div class="muscle-svg-wrap">${muscleSVG(ex.muscleMap||[])}</div>
+    </div>
+    <div style="padding:16px 16px 4px">
+      <div style="font-size:24px;font-weight:800">${ex.name}</div>
+      <div style="color:var(--text2);font-size:13px;margin-top:4px">${ex.eq} · ${ex.cat}</div>
+    </div>
+    <div class="muscle-pills">${(ex.muscles||[]).map(m=>`<span class="mpill">${m}</span>`).join('')}</div>
+    ${pr?`<div class="pr-banner">🥇 Récord Personal: <strong>${pr.weight}${s.unit} × ${pr.reps} reps</strong></div>`:''}
+    <div class="card"><div class="card-ttl">📖 Descripción</div><p style="font-size:14px;color:var(--text2);line-height:1.6">${ex.desc||''}</p></div>
+    ${stepsHTML?`<div class="card"><div class="card-ttl">✅ Cómo hacerlo</div>${stepsHTML}</div>`:''}
+    <div class="card"><div class="card-ttl">📊 Historial reciente</div>${histHTML}</div>
+    <div style="padding:0 16px 8px;display:flex;gap:10px">
+      <a href="${ytUrl}" target="_blank" class="btn btn-outline" style="flex:1;text-align:center;text-decoration:none">▶ Ver en YouTube</a>
+      <button class="btn btn-primary" style="flex:1" onclick="addToActive('${id}')">＋ Añadir</button>
+    </div>
+    <button class="btn btn-secondary btn-block" style="margin:0 16px 24px;width:calc(100%-32px)" onclick="calcORM('${id}')">🧮 Calcular 1RM</button>`;
+};
+
+// ── VIEW: PROGRAMS ────────────────────────────────────────────────────────────
+Views.programs=function(){
+  const activeP=Store.getProgram();
+  const html=PROGRAMS.map(p=>`
+    <div class="prog-card" onclick="Views.programDetail('${p.id}')">
+      <div class="prog-card-top" style="background:linear-gradient(135deg,${p.color}55,${p.color}22)">
+        <div style="font-size:48px">${p.emoji}</div>
+        ${activeP&&activeP.id===p.id?'<div class="prog-active-pill">Activo</div>':''}
+      </div>
+      <div class="prog-card-body">
+        <div class="prog-card-name">${p.name}</div>
+        <div class="prog-card-desc">${p.desc}</div>
+        <div class="prog-badges">
+          <span class="pbadge" style="background:${p.color}33;color:${p.color}">${p.level}</span>
+          <span class="pbadge pbadge-g">${p.daysPerWeek}d/semana</span>
+          <span class="pbadge pbadge-m">${p.duration}</span>
+        </div>
+      </div>
+    </div>`).join('');
+  document.getElementById('main').innerHTML=`<div class="page-hdr"><div class="page-ttl">Programas</div></div>${html}`;
+};
+
+Views.programDetail=function(id){
+  const p=PROGRAMS.find(x=>x.id===id);if(!p)return;
+  const isActive=Store.getProgram()&&Store.getProgram().id===id;
+  const days=p.days.map((d,di)=>{
+    const rows=d.exercises.map(e=>{
+      const ex=getEx(e.id);
+      return `<div class="day-ex-row">
+        <div class="day-ex-left"><div style="font-size:20px">${ex?ex.emoji:'💪'}</div><div><div style="font-size:14px;font-weight:600">${ex?ex.name:e.id}</div><div style="font-size:12px;color:var(--text2)">${e.sets}×${e.reps} · ${e.rest}s descanso</div></div></div>
+        <div style="color:var(--text3);font-size:12px">${ex?(ex.muscles[0]):'—'}</div>
+      </div>`;}).join('');
+    return `<div class="day-block">
+      <div class="day-block-hdr"><span>Día ${di+1}: ${d.name}</span>
+        <button class="btn btn-sm btn-outline" onclick="startDay('${id}',${di})">Iniciar ›</button>
+      </div>${rows}</div>`;}).join('');
+  document.getElementById('main').innerHTML=`
+    <div class="subpage-header"><button class="back-btn" onclick="Router.back()">‹ Atrás</button></div>
+    <div class="prog-hero" style="background:linear-gradient(135deg,${p.color}44,${p.color}11)">
+      <div style="font-size:60px">${p.emoji}</div>
+      <div>
+        <div style="font-size:22px;font-weight:800">${p.name}</div>
+        <div style="color:var(--text2);font-size:13px;margin-top:4px">${p.desc}</div>
+        <div class="prog-badges" style="margin-top:8px">
+          <span class="pbadge" style="background:${p.color}33;color:${p.color}">${p.level}</span>
+          <span class="pbadge pbadge-g">${p.daysPerWeek}d/sem</span>
+          <span class="pbadge pbadge-m">${p.duration}</span>
+        </div>
+      </div>
+    </div>
+    <div style="padding:12px 16px">
+      <button class="btn btn-block ${isActive?'btn-danger':'btn-primary'}" onclick="${isActive?'stopProgram()':'startProg(\''+id+'\')'}">
+        ${isActive?'⛔ Dejar programa':'🚀 Empezar programa'}
+      </button>
+    </div>
+    ${days}<div style="height:24px"></div>`;
+};
+
+// ── VIEW: PROGRESS ────────────────────────────────────────────────────────────
+Views.progress=function(tab){
+  tab=tab||'resumen';
+  const s=Store.getSettings();
+  const workouts=Store.getWorkouts();
+  const prs=Store.getPRs();
+  const tabs=['resumen','records','historial'].map(t=>`<button class="ptab${tab===t?' active':''}" onclick="Views.progress('${t}')">${{resumen:'Resumen',records:'Récords',historial:'Historial'}[t]}</button>`).join('');
+
+  let body='';
+  if(tab==='resumen'){
+    const streak=calcStreak(workouts);
+    const maxStreak=calcMaxStreak(workouts);
+    const totalKg=workouts.reduce((a,w)=>a+w.exercises.reduce((b,ex)=>b+ex.sets.reduce((c,s)=>c+(s.completed?(+s.weight||0)*(+s.reps||0):0),0),0),0);
+    const totalTime=workouts.reduce((a,w)=>a+(w.duration||0),0);
+    const today=new Date();today.setHours(0,0,0,0);
+    const cells=Array.from({length:60},(_,i)=>{
+      const d=new Date(today);d.setDate(d.getDate()-(59-i));
+      const iso=d.toISOString().slice(0,10);
+      const has=workouts.some(w=>w.date.slice(0,10)===iso);
+      const isT=i===59;
+      return `<div class="cal-cell${has?' has':''}${isT?' today':''}" title="${iso}"></div>`;
+    }).join('');
+    body=`
+      <div class="stats-grid" style="margin:0 16px 12px">
+        <div class="stat-box"><div class="stat-val">${streak}</div><div class="stat-lbl">🔥 Racha</div></div>
+        <div class="stat-box"><div class="stat-val">${maxStreak}</div><div class="stat-lbl">Récord racha</div></div>
+        <div class="stat-box"><div class="stat-val">${workouts.length}</div><div class="stat-lbl">Entrenos</div></div>
+        <div class="stat-box"><div class="stat-val">${(totalKg/1000).toFixed(1)}t</div><div class="stat-lbl">Vol. total</div></div>
+        <div class="stat-box"><div class="stat-val">${Math.floor(totalTime/3600)}h</div><div class="stat-lbl">Tiempo</div></div>
+        <div class="stat-box"><div class="stat-val">${Object.keys(prs).length}</div><div class="stat-lbl">PRs</div></div>
+      </div>
+      <div class="card"><div class="card-ttl">Últimos 60 días</div><div class="cal-grid">${cells}</div></div>
+      <div class="card"><div class="card-ttl">Volumen semanal (${s.unit})</div><canvas id="vol-chart" height="120"></canvas></div>`;
+  } else if(tab==='records'){
+    const rows=Object.entries(prs).map(([id,pr])=>{
+      const ex=getEx(id);
+      return `<div class="pr-row" onclick="Views.exerciseDetail('${id}')">
+        <div class="pr-emoji">${ex?ex.emoji:'💪'}</div>
+        <div class="pr-info"><div style="font-size:14px;font-weight:600">${ex?ex.name:id}</div><div style="font-size:12px;color:var(--text3)">${fmtDate(pr.date)}</div></div>
+        <div style="text-align:right"><div style="color:var(--accent2);font-weight:700;font-size:16px">${pr.weight}${s.unit}</div><div style="color:var(--text3);font-size:12px">× ${pr.reps} reps</div></div>
+      </div>`;}).join('')||'<div class="empty-state"><div class="es-icon">🏆</div><h3>Sin récords aún</h3><p>Completa series para registrar tus PRs</p></div>';
+    body=`<div class="card" style="margin-top:12px">${rows}</div>`;
+  } else {
+    body=`<div style="padding-top:8px">${workouts.slice(0,20).map(w=>`
+      <div class="history-card" onclick="Views.workoutDetail('${w.id}')">
+        <div class="hc-icon">🏋️</div>
+        <div class="hc-info"><div class="hc-name">${w.name}</div><div class="hc-meta">${w.exercises.length} ejercicios · ${fmtTime(w.duration||0)}</div></div>
+        <div class="hc-right"><div class="hc-date">${fmtDate(w.date)}</div><div class="hc-vol">${totalVol(w.exercises,s.unit)}</div></div>
+      </div>`).join('')||'<div class="empty-state"><div class="es-icon">📋</div><h3>Sin historial</h3></div>'}</div>`;
+  }
+  document.getElementById('main').innerHTML=`
+    <div class="page-hdr"><div class="page-ttl">Progreso</div></div>
+    <div class="ptabs">${tabs}</div>${body}`;
+  if(tab==='resumen')setTimeout(()=>drawChart('vol-chart',getLast8Weeks(workouts)),50);
+};
+
+// ── VIEW: PROFILE ─────────────────────────────────────────────────────────────
+Views.profile=function(){
+  const s=Store.getSettings();
+  document.getElementById('main').innerHTML=`
+    <div class="page-hdr"><div class="page-ttl">Perfil</div></div>
+    <div style="text-align:center;padding:16px 0 20px">
+      <div class="avatar-circle">🏋️</div>
+      <div style="font-size:20px;font-weight:700;margin-top:8px">${s.name}</div>
+      <div style="color:var(--text2);font-size:13px">${Store.getWorkouts().length} entrenamientos completados</div>
+    </div>
+    <div class="card">
+      <div class="card-ttl">Configuración</div>
+      <div class="setting-row"><span>Nombre</span><input class="setting-inp" value="${s.name}" onchange="saveName(this.value)" placeholder="Tu nombre"></div>
+      <div class="setting-row"><span>Unidades</span><button class="toggle-btn" onclick="toggleUnit()">${s.unit==='kg'?'kg ⇄ lbs':'lbs ⇄ kg'}</button></div>
+      <div class="setting-row"><span>Descanso entre series</span><button class="toggle-btn" onclick="cycleRest()">${s.restTime}s</button></div>
+    </div>
+    <div class="card">
+      <div class="card-ttl">Datos</div>
+      <div class="setting-row"><span>Exportar datos</span><button class="toggle-btn" onclick="exportData()">Exportar JSON</button></div>
+      <div class="setting-row"><span>Borrar todo</span><button class="toggle-btn" style="color:var(--red)" onclick="clearAll()">Borrar</button></div>
+    </div>
+    <div style="text-align:center;color:var(--text3);font-size:12px;padding:20px">GymTracker v2.0 · Réplica de Lyfta</div>`;
+};
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function calcStreak(ws){
+  if(!ws.length)return 0;
+  let streak=0;
+  const today=new Date();today.setHours(0,0,0,0);
+  const dates=[...new Set(ws.map(w=>w.date.slice(0,10)))].sort().reverse();
+  let cur=new Date(today);
+  for(const d of dates){const wd=new Date(d);const diff=Math.round((cur-wd)/86400000);if(diff<=1){streak++;cur=wd;}else break;}
+  return streak;
+}
+function calcMaxStreak(ws){
+  if(!ws.length)return 0;
+  const dates=[...new Set(ws.map(w=>w.date.slice(0,10)))].sort();
+  let max=1,cur=1;
+  for(let i=1;i<dates.length;i++){
+    const diff=(new Date(dates[i])-new Date(dates[i-1]))/86400000;
+    if(diff===1){cur++;max=Math.max(max,cur);}else cur=1;
+  }
+  return max;
+}
+function getLast8Weeks(ws){
+  const weeks=Array(8).fill(0);const now=Date.now();
+  ws.forEach(w=>{
+    const dAgo=Math.floor((now-new Date(w.date))/86400000);
+    const idx=Math.floor(dAgo/7);
+    if(idx<8)weeks[7-idx]+=w.exercises.reduce((a,ex)=>a+ex.sets.reduce((b,s)=>b+(s.completed?(+s.weight||0)*(+s.reps||0):0),0),0);
   });
   return weeks;
 }
-
-function drawVolumeChart(canvasId, data) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  canvas.width = canvas.parentElement.offsetWidth - 32;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width, h = canvas.height;
-  const max = Math.max(...data, 1);
-  const barW = (w - 16) / data.length;
-  ctx.clearRect(0, 0, w, h);
-  data.forEach((v, i) => {
-    const barH = (v / max) * (h - 20);
-    const x = 8 + i * barW + barW * 0.1;
-    const bw = barW * 0.8;
-    const grad = ctx.createLinearGradient(0, h - barH, 0, h);
-    grad.addColorStop(0, '#7c3aed');
-    grad.addColorStop(1, '#5b21b6');
-    ctx.fillStyle = v > 0 ? grad : '#2a2a2a';
+function drawChart(id,data){
+  const canvas=document.getElementById(id);if(!canvas)return;
+  canvas.width=canvas.parentElement.clientWidth-32;
+  const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,max=Math.max(...data,1);
+  ctx.clearRect(0,0,w,h);
+  const bw=(w-20)/data.length;
+  data.forEach((v,i)=>{
+    const bh=Math.max((v/max)*(h-24),v>0?4:0);
+    const x=10+i*bw+bw*.1,bww=bw*.8;
+    const g=ctx.createLinearGradient(0,h-bh,0,h);
+    g.addColorStop(0,'#7c3aed');g.addColorStop(1,'#4c1d95');
+    ctx.fillStyle=v>0?g:'#2a2a2a';
     ctx.beginPath();
-    ctx.roundRect(x, h - barH - 2, bw, barH + 2, 4);
+    if(ctx.roundRect)ctx.roundRect(x,h-bh-4,bww,bh,4);
+    else ctx.rect(x,h-bh-4,bww,bh);
     ctx.fill();
+    const lbl=['S-7','S-6','S-5','S-4','S-3','S-2','S-1','Hoy'][i];
+    ctx.fillStyle='#6b7280';ctx.font='10px sans-serif';ctx.textAlign='center';
+    ctx.fillText(lbl,x+bww/2,h-1);
   });
 }
-
-function searchExercises(q, filter) {
-  const list = document.getElementById('ex-list');
-  if (!list) return;
-  const filtered = EXERCISES.filter(e =>
-    (filter === 'Todos' || e.cat === filter) &&
-    (!q || e.name.toLowerCase().includes(q.toLowerCase()) || e.muscles.some(m => m.toLowerCase().includes(q.toLowerCase())))
-  );
-  const settings = Store.getSettings();
-  list.innerHTML = filtered.map(e => {
-    const pr = Store.getPRs()[e.id];
-    return `<div class="ex-item" onclick="Views.exerciseDetail('${e.id}')">
-      <div class="ex-avatar">${e.emoji}</div>
-      <div class="ex-info">
-        <div class="ex-name">${e.name}</div>
-        <div class="ex-meta">${e.cat} · ${e.eq} · ${e.muscles[0]}</div>
-        ${pr ? `<div style="font-size:11px;color:var(--green);margin-top:1px">PR: ${pr.weight}${settings.unit} × ${pr.reps}</div>` : ''}
+function searchEx(q,filter){
+  const list=document.getElementById('ex-list');if(!list)return;
+  const s=Store.getSettings();
+  const filtered=EXERCISES.filter(e=>(filter==='Todos'||e.cat===filter)&&(!q||e.name.toLowerCase().includes(q.toLowerCase())||e.muscles.some(m=>m.toLowerCase().includes(q.toLowerCase()))));
+  list.innerHTML=filtered.map(e=>{
+    const pr=Store.getPRs()[e.id];
+    return `<div class="ex-row" onclick="Views.exerciseDetail('${e.id}')">
+      <div class="ex-row-icon" style="background:${catColor(e.cat)}22">${e.emoji}</div>
+      <div class="ex-row-info">
+        <div class="ex-row-name">${e.name}</div>
+        <div class="ex-row-meta">${e.eq} · ${e.muscles[0]}</div>
+        ${pr?`<div class="ex-row-pr">PR: ${pr.weight}${s.unit} × ${pr.reps} reps</div>`:''}
       </div>
-      <div class="ex-chevron">${icons.chevron}</div>
-    </div>`;
-  }).join('');
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`;}).join('');
 }
-
-function addToActive(exId) {
-  if (!Store.getActive()) {
-    if (confirm('No hay entrenamiento activo. ¿Iniciar uno nuevo?')) Workout.start();
-    else return;
-  }
-  if (!Workout.get()) Workout.load();
-  Workout.addExercise(exId);
+function addToActive(id){
+  if(!Store.getActive()&&!Workout.get()){if(confirm('No hay entrenamiento activo. ¿Iniciar uno nuevo?'))Workout.start();else return;}
+  if(!Workout.get())Workout.load();
+  Workout.addExercise(id);
 }
-
-function removeExercise(ei) {
-  if (!confirm('¿Eliminar ejercicio?')) return;
-  Workout.get().exercises.splice(ei, 1);
-  Workout.save();
-  Views.activeWorkout();
+function startEmpty(){
+  if(Store.getActive()){if(!confirm('Ya hay un entrenamiento activo. ¿Descartarlo?'))return;Workout.discard();return;}
+  Workout.start();
 }
-
-function cycleType(ei, si) {
-  const s = Workout.get().exercises[ei].sets[si];
-  const types = ['normal','warmup','drop'];
-  s.type = types[(types.indexOf(s.type) + 1) % types.length];
-  Workout.save();
-  Views.activeWorkout();
+function repeatWorkout(id){
+  const w=Store.getWorkouts().find(x=>x.id===id);if(!w)return;
+  Workout.start({name:w.name,exercises:w.exercises.map(ex=>({...ex,sets:ex.sets.map(s=>({...s,completed:false}))}))});
 }
-
-function w_rename(val) {
-  if (Workout.get()) { Workout.get().name = val; Workout.save(); }
-}
-
-function confirmFinish() {
-  const w = Workout.get();
-  const done = w.exercises.reduce((n, ex) => n + ex.sets.filter(s => s.completed).length, 0);
-  if (done === 0 && !confirm('No has completado ninguna serie. ¿Finalizar igualmente?')) return;
+function confirmFinish(){
+  const w=Workout.get();if(!w)return;
+  const done=w.exercises.reduce((n,ex)=>n+ex.sets.filter(s=>s.completed).length,0);
+  if(!done&&!confirm('No completaste ninguna serie. ¿Finalizar igual?'))return;
   Workout.finish();
 }
-
-function confirmDiscard() {
-  if (confirm('¿Descartar entrenamiento? Se perderán todos los datos.')) Workout.discard();
-}
-
-function startProgram(id) {
-  Store.setProgram({ id, dayIdx: 0 });
-  toast('¡Programa iniciado!');
-  Router.back();
-}
-
-function stopProgram() {
-  Store.clearProgram();
-  toast('Programa detenido');
-  Router.back();
-}
-
-function startProgramDay(programId, dayIdx) {
-  const p = PROGRAMS.find(x => x.id === programId);
-  if (!p) return;
-  const day = p.days[dayIdx];
-  const template = {
-    name: `${p.name} – ${day.name}`,
-    exercises: day.exercises.map(e => {
-      const ex = getEx(e.id);
-      return {
-        exerciseId: e.id,
-        name: ex ? ex.name : e.id,
-        emoji: ex ? ex.emoji : '💪',
-        muscles: ex ? ex.muscles : [],
-        sets: Array.from({length: e.sets}, () => ({ reps: e.reps, weight: '', type: 'normal', completed: false }))
-      };
-    })
-  };
-  if (Store.getActive() && !confirm('Ya tienes un entreno activo. ¿Reemplazarlo?')) return;
+function confirmDiscard(){if(confirm('¿Descartar entrenamiento? Se perderán los datos.'))Workout.discard();}
+function startProg(id){Store.setProgram({id});toast('¡Programa iniciado! 🎯');Router.back();}
+function stopProgram(){Store.clearProgram();toast('Programa detenido');Router.back();}
+function startDay(progId,dayIdx){
+  const p=PROGRAMS.find(x=>x.id===progId);if(!p)return;
+  const day=p.days[dayIdx];
+  const template={name:`${p.name} – ${day.name}`,exercises:day.exercises.map(e=>{
+    const ex=getEx(e.id);
+    return{exerciseId:e.id,name:ex?ex.name:e.id,emoji:ex?ex.emoji:'💪',muscles:ex?ex.muscles:[],cat:ex?ex.cat:'',
+      sets:Array.from({length:e.sets},()=>({reps:e.reps,weight:'',type:'normal',completed:false}))};})};
+  if(Store.getActive()&&!confirm('Ya hay un entreno activo. ¿Reemplazarlo?'))return;
   Workout.start(template);
 }
-
-function toggleUnit() {
-  const s = Store.getSettings();
-  s.unit = s.unit === 'kg' ? 'lbs' : 'kg';
-  Store.saveSettings(s);
-  Views.profile();
+function toggleUnit(){const s=Store.getSettings();s.unit=s.unit==='kg'?'lbs':'kg';Store.saveSettings(s);Views.profile();}
+function cycleRest(){const s=Store.getSettings();const opts=[30,60,90,120,180,240];s.restTime=opts[(opts.indexOf(s.restTime)+1)%opts.length];Store.saveSettings(s);Views.profile();}
+function saveName(v){const s=Store.getSettings();s.name=v;Store.saveSettings(s);}
+function exportData(){
+  const data={workouts:Store.getWorkouts(),prs:Store.getPRs(),settings:Store.getSettings()};
+  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
+  a.download='gymtracker-backup.json';a.click();
 }
-
-function cycleRest() {
-  const s = Store.getSettings();
-  const opts = [30, 60, 90, 120, 180, 240];
-  const idx = opts.indexOf(s.restTime);
-  s.restTime = opts[(idx + 1) % opts.length];
-  Store.saveSettings(s);
-  Views.profile();
-}
-
-function clearAllData() {
-  if (confirm('¿Borrar TODOS los datos? Esta acción no se puede deshacer.')) {
-    localStorage.clear();
-    toast('Datos borrados');
-    Router.reset('home');
-  }
+function clearAll(){if(confirm('¿Borrar TODOS los datos? Esto no se puede deshacer.')){localStorage.clear();toast('Datos borrados');Router.reset('home');}}
+function calcORM(id){
+  const pr=Store.getPRs()[id];
+  if(!pr){toast('Necesitas un PR registrado primero');return;}
+  const orm=(pr.weight*(1+pr.reps/30)).toFixed(1);
+  const s=Store.getSettings();
+  alert(`1RM estimado para ${getEx(id)?.name||id}:\n\n${orm} ${s.unit}\n\n(Fórmula Epley: peso × (1 + reps/30))\nBased en PR: ${pr.weight}${s.unit} × ${pr.reps} reps`);
 }
 
 // ── APP ───────────────────────────────────────────────────────────────────────
-const App = {
-  render(view, params = {}) {
-    // update nav
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    const navMap = { home:'nav-home', exercises:'nav-ex', programs:'nav-prog', progress:'nav-prog2', profile:'nav-prof' };
-    const navEl = document.getElementById(navMap[view]);
-    if (navEl) navEl.classList.add('active');
-
-    // render view
-    const views = { home: Views.home, active: Views.activeWorkout, exercises: Views.exercises,
-      programs: Views.programs, progress: Views.progress, profile: Views.profile,
-      history: Views.history };
-    if (views[view]) views[view].call(Views, params);
-    document.getElementById('main').scrollTo(0, 0);
+const App={
+  render(view,params={}){
+    const navIds={home:'nav-home',active:'nav-workout',exercises:'nav-ex',programs:'nav-prog',progress:'nav-prog',profile:'nav-prof',history:'nav-home'};
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    const nEl=document.getElementById(navIds[view]||'nav-home');
+    if(nEl)nEl.classList.add('active');
+    const viewFns={home:Views.home,active:Views.activeWorkout,exercises:Views.exercises,programs:Views.programs,progress:Views.progress,profile:Views.profile,history:Views.history,workoutDetail:()=>Views.workoutDetail(params.id)};
+    if(viewFns[view])viewFns[view](params);
+    const m=document.getElementById('main');if(m)m.scrollTop=0;
   },
-
-  init() {
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
-
-    // check for active workout
-    if (Workout.load()) {
-      // has active workout, go home which will show banner
-    }
-
+  init(){
+    if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    Workout.load();
     Router.reset('home');
-
-    // nav listeners
-    document.getElementById('nav-home').onclick = () => Router.reset('home');
-    document.getElementById('nav-workout').onclick = () => {
-      if (Store.getActive()) Router.go('active');
-      else Views.startEmpty();
-    };
-    document.getElementById('nav-ex').onclick = () => Router.go('exercises');
-    document.getElementById('nav-prog').onclick = () => Router.go('programs');
-    document.getElementById('nav-prof').onclick = () => Router.go('profile');
-
-    // modal search
-    document.getElementById('modal-search').addEventListener('input', e => Modal._render(e.target.value));
-    document.getElementById('modal-overlay').addEventListener('click', e => {
-      if (e.target === document.getElementById('modal-overlay')) Modal.close();
-    });
+    document.getElementById('nav-home').onclick=()=>Router.reset('home');
+    document.getElementById('nav-workout').onclick=()=>{if(Store.getActive()||Workout.get())Router.go('active');else startEmpty();};
+    document.getElementById('nav-ex').onclick=()=>Router.go('exercises');
+    document.getElementById('nav-prog').onclick=()=>Router.go('programs');
+    document.getElementById('nav-prof').onclick=()=>Router.go('profile');
+    const ms=document.getElementById('modal-search');
+    if(ms)ms.addEventListener('input',e=>Modal._render(e.target.value));
+    const mo=document.getElementById('modal-overlay');
+    if(mo)mo.addEventListener('click',e=>{if(e.target===mo)Modal.close();});
   }
 };
-
-document.addEventListener('DOMContentLoaded', () => App.init());
+document.addEventListener('DOMContentLoaded',()=>App.init());

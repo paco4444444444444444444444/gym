@@ -1,253 +1,128 @@
 const EXERCISES = [
-  // ── CHEST ──
-  {id:'e001',name:'Barbell Bench Press',cat:'Chest',eq:'Barbell',muscles:['Chest','Triceps','Front Delts'],emoji:'🏋️'},
-  {id:'e002',name:'Incline Barbell Bench Press',cat:'Chest',eq:'Barbell',muscles:['Upper Chest','Triceps'],emoji:'🏋️'},
-  {id:'e003',name:'Decline Barbell Bench Press',cat:'Chest',eq:'Barbell',muscles:['Lower Chest','Triceps'],emoji:'🏋️'},
-  {id:'e004',name:'Dumbbell Bench Press',cat:'Chest',eq:'Dumbbell',muscles:['Chest','Triceps'],emoji:'🥊'},
-  {id:'e005',name:'Incline Dumbbell Press',cat:'Chest',eq:'Dumbbell',muscles:['Upper Chest','Triceps'],emoji:'🥊'},
-  {id:'e006',name:'Dumbbell Fly',cat:'Chest',eq:'Dumbbell',muscles:['Chest'],emoji:'🥊'},
-  {id:'e007',name:'Cable Fly',cat:'Chest',eq:'Cable',muscles:['Chest'],emoji:'⚡'},
-  {id:'e008',name:'Push-Up',cat:'Chest',eq:'Bodyweight',muscles:['Chest','Triceps','Front Delts'],emoji:'💪'},
-  {id:'e009',name:'Chest Dips',cat:'Chest',eq:'Bodyweight',muscles:['Lower Chest','Triceps'],emoji:'💪'},
-  {id:'e010',name:'Machine Chest Press',cat:'Chest',eq:'Machine',muscles:['Chest','Triceps'],emoji:'🔩'},
-  {id:'e011',name:'Pec Deck',cat:'Chest',eq:'Machine',muscles:['Chest'],emoji:'🔩'},
-
-  // ── BACK ──
-  {id:'e012',name:'Deadlift',cat:'Back',eq:'Barbell',muscles:['Lower Back','Hamstrings','Glutes','Traps'],emoji:'🏋️'},
-  {id:'e013',name:'Barbell Row',cat:'Back',eq:'Barbell',muscles:['Lats','Rhomboids','Biceps'],emoji:'🏋️'},
-  {id:'e014',name:'T-Bar Row',cat:'Back',eq:'Barbell',muscles:['Mid Back','Lats'],emoji:'🏋️'},
-  {id:'e015',name:'Pull-Up',cat:'Back',eq:'Bodyweight',muscles:['Lats','Biceps'],emoji:'💪'},
-  {id:'e016',name:'Chin-Up',cat:'Back',eq:'Bodyweight',muscles:['Lats','Biceps'],emoji:'💪'},
-  {id:'e017',name:'Lat Pulldown',cat:'Back',eq:'Cable',muscles:['Lats','Biceps'],emoji:'⚡'},
-  {id:'e018',name:'Seated Cable Row',cat:'Back',eq:'Cable',muscles:['Mid Back','Lats','Biceps'],emoji:'⚡'},
-  {id:'e019',name:'Dumbbell Row',cat:'Back',eq:'Dumbbell',muscles:['Lats','Rhomboids'],emoji:'🥊'},
-  {id:'e020',name:'Face Pull',cat:'Back',eq:'Cable',muscles:['Rear Delts','Rotator Cuff'],emoji:'⚡'},
-  {id:'e021',name:'Romanian Deadlift',cat:'Back',eq:'Barbell',muscles:['Hamstrings','Lower Back','Glutes'],emoji:'🏋️'},
-  {id:'e022',name:'Hyperextension',cat:'Back',eq:'Machine',muscles:['Lower Back','Glutes'],emoji:'🔩'},
-  {id:'e023',name:'Good Morning',cat:'Back',eq:'Barbell',muscles:['Lower Back','Hamstrings'],emoji:'🏋️'},
-
-  // ── SHOULDERS ──
-  {id:'e024',name:'Overhead Press',cat:'Shoulders',eq:'Barbell',muscles:['Front Delts','Side Delts','Triceps'],emoji:'🏋️'},
-  {id:'e025',name:'Dumbbell Shoulder Press',cat:'Shoulders',eq:'Dumbbell',muscles:['Front Delts','Side Delts'],emoji:'🥊'},
-  {id:'e026',name:'Arnold Press',cat:'Shoulders',eq:'Dumbbell',muscles:['All Delts'],emoji:'🥊'},
-  {id:'e027',name:'Lateral Raise',cat:'Shoulders',eq:'Dumbbell',muscles:['Side Delts'],emoji:'🥊'},
-  {id:'e028',name:'Front Raise',cat:'Shoulders',eq:'Dumbbell',muscles:['Front Delts'],emoji:'🥊'},
-  {id:'e029',name:'Rear Delt Fly',cat:'Shoulders',eq:'Dumbbell',muscles:['Rear Delts'],emoji:'🥊'},
-  {id:'e030',name:'Cable Lateral Raise',cat:'Shoulders',eq:'Cable',muscles:['Side Delts'],emoji:'⚡'},
-  {id:'e031',name:'Upright Row',cat:'Shoulders',eq:'Barbell',muscles:['Side Delts','Traps'],emoji:'🏋️'},
-  {id:'e032',name:'Machine Shoulder Press',cat:'Shoulders',eq:'Machine',muscles:['Delts','Triceps'],emoji:'🔩'},
-  {id:'e033',name:'Barbell Shrugs',cat:'Shoulders',eq:'Barbell',muscles:['Traps'],emoji:'🏋️'},
-
-  // ── BICEPS ──
-  {id:'e034',name:'Barbell Curl',cat:'Arms',eq:'Barbell',muscles:['Biceps'],emoji:'💪'},
-  {id:'e035',name:'EZ-Bar Curl',cat:'Arms',eq:'Barbell',muscles:['Biceps','Brachialis'],emoji:'💪'},
-  {id:'e036',name:'Dumbbell Curl',cat:'Arms',eq:'Dumbbell',muscles:['Biceps'],emoji:'🥊'},
-  {id:'e037',name:'Hammer Curl',cat:'Arms',eq:'Dumbbell',muscles:['Brachialis','Brachioradialis'],emoji:'🥊'},
-  {id:'e038',name:'Preacher Curl',cat:'Arms',eq:'Barbell',muscles:['Biceps'],emoji:'🏋️'},
-  {id:'e039',name:'Concentration Curl',cat:'Arms',eq:'Dumbbell',muscles:['Biceps'],emoji:'🥊'},
-  {id:'e040',name:'Cable Curl',cat:'Arms',eq:'Cable',muscles:['Biceps'],emoji:'⚡'},
-  {id:'e041',name:'Incline Dumbbell Curl',cat:'Arms',eq:'Dumbbell',muscles:['Biceps Long Head'],emoji:'🥊'},
-
-  // ── TRICEPS ──
-  {id:'e042',name:'Close-Grip Bench Press',cat:'Arms',eq:'Barbell',muscles:['Triceps','Chest'],emoji:'🏋️'},
-  {id:'e043',name:'Tricep Pushdown',cat:'Arms',eq:'Cable',muscles:['Triceps'],emoji:'⚡'},
-  {id:'e044',name:'Overhead Tricep Extension',cat:'Arms',eq:'Dumbbell',muscles:['Triceps Long Head'],emoji:'🥊'},
-  {id:'e045',name:'Skull Crusher',cat:'Arms',eq:'Barbell',muscles:['Triceps'],emoji:'🏋️'},
-  {id:'e046',name:'Tricep Dips',cat:'Arms',eq:'Bodyweight',muscles:['Triceps','Chest'],emoji:'💪'},
-  {id:'e047',name:'Diamond Push-Up',cat:'Arms',eq:'Bodyweight',muscles:['Triceps'],emoji:'💪'},
-  {id:'e048',name:'Overhead Cable Extension',cat:'Arms',eq:'Cable',muscles:['Triceps Long Head'],emoji:'⚡'},
-  {id:'e049',name:'Tricep Kickback',cat:'Arms',eq:'Dumbbell',muscles:['Triceps'],emoji:'🥊'},
-
-  // ── LEGS ──
-  {id:'e050',name:'Barbell Squat',cat:'Legs',eq:'Barbell',muscles:['Quads','Glutes','Hamstrings'],emoji:'🏋️'},
-  {id:'e051',name:'Front Squat',cat:'Legs',eq:'Barbell',muscles:['Quads','Core'],emoji:'🏋️'},
-  {id:'e052',name:'Leg Press',cat:'Legs',eq:'Machine',muscles:['Quads','Glutes','Hamstrings'],emoji:'🔩'},
-  {id:'e053',name:'Hack Squat',cat:'Legs',eq:'Machine',muscles:['Quads'],emoji:'🔩'},
-  {id:'e054',name:'Bulgarian Split Squat',cat:'Legs',eq:'Dumbbell',muscles:['Quads','Glutes'],emoji:'🥊'},
-  {id:'e055',name:'Walking Lunges',cat:'Legs',eq:'Dumbbell',muscles:['Quads','Glutes'],emoji:'🥊'},
-  {id:'e056',name:'Leg Extension',cat:'Legs',eq:'Machine',muscles:['Quads'],emoji:'🔩'},
-  {id:'e057',name:'Leg Curl',cat:'Legs',eq:'Machine',muscles:['Hamstrings'],emoji:'🔩'},
-  {id:'e058',name:'Standing Calf Raise',cat:'Legs',eq:'Machine',muscles:['Calves'],emoji:'🔩'},
-  {id:'e059',name:'Seated Calf Raise',cat:'Legs',eq:'Machine',muscles:['Soleus'],emoji:'🔩'},
-  {id:'e060',name:'Hip Thrust',cat:'Legs',eq:'Barbell',muscles:['Glutes','Hamstrings'],emoji:'🏋️'},
-  {id:'e061',name:'Glute Bridge',cat:'Legs',eq:'Bodyweight',muscles:['Glutes'],emoji:'💪'},
-  {id:'e062',name:'Box Jump',cat:'Legs',eq:'Bodyweight',muscles:['Quads','Calves'],emoji:'💪'},
-  {id:'e063',name:'Step-Up',cat:'Legs',eq:'Dumbbell',muscles:['Quads','Glutes'],emoji:'🥊'},
-  {id:'e064',name:'Goblet Squat',cat:'Legs',eq:'Kettlebell',muscles:['Quads','Glutes'],emoji:'🔔'},
-  {id:'e065',name:'Sumo Deadlift',cat:'Legs',eq:'Barbell',muscles:['Inner Thighs','Glutes','Hamstrings'],emoji:'🏋️'},
-
+  // ── PECHO ──
+  {id:'e001',name:'Press de Banca con Barra',cat:'Pecho',eq:'Barra',muscles:['Pecho','Tríceps','Deltoides Ant.'],muscleMap:['pecho','triceps','hombros'],emoji:'🏋️',desc:'Ejercicio rey del pecho. Acostado en banco plano, baja la barra al pecho y empuja explosivamente.',steps:['Túmbate en el banco con pies apoyados en el suelo','Agarra la barra algo más ancha que los hombros','Baja controlado hasta tocar el pecho','Empuja hasta extender los brazos completamente'],ytSearch:'press banca barra tecnica correcta español'},
+  {id:'e002',name:'Press de Banca Inclinado',cat:'Pecho',eq:'Barra',muscles:['Pecho Superior','Tríceps','Deltoides Ant.'],muscleMap:['pecho','triceps','hombros'],emoji:'🏋️',desc:'Variante inclinada para trabajar la parte superior del pecho.',steps:['Ajusta el banco a 30-45 grados','Agarra la barra con agarre medio-amplio','Baja la barra hasta la parte alta del pecho','Empuja hacia arriba y ligeramente atrás'],ytSearch:'press banca inclinado barra tecnica'},
+  {id:'e003',name:'Press de Banca Declinado',cat:'Pecho',eq:'Barra',muscles:['Pecho Inferior','Tríceps'],muscleMap:['pecho','triceps'],emoji:'🏋️',desc:'Para trabajar la zona inferior del pecho con mayor énfasis.',steps:['Ajusta el banco en declive con pies sujetos','Agarra la barra con agarre medio','Baja la barra a la parte baja del pecho','Empuja hasta extender completamente'],ytSearch:'press banca declinado tecnica'},
+  {id:'e004',name:'Press de Pecho con Mancuernas',cat:'Pecho',eq:'Mancuernas',muscles:['Pecho','Tríceps'],muscleMap:['pecho','triceps'],emoji:'🥊',desc:'Mayor rango de movimiento que con barra. Trabaja cada lado de forma independiente.',steps:['Túmbate con una mancuerna en cada mano','Baja las mancuernas hasta la altura del pecho','Empuja hacia arriba juntando las mancuernas','Mantén codos a 45-75 grados del cuerpo'],ytSearch:'press pecho mancuernas tecnica'},
+  {id:'e005',name:'Press Inclinado Mancuernas',cat:'Pecho',eq:'Mancuernas',muscles:['Pecho Superior','Tríceps'],muscleMap:['pecho','triceps'],emoji:'🥊',desc:'Enfoca el trabajo en el pecho superior para mayor volumen en la parte alta.',steps:['Banco inclinado 30-45 grados','Mancuernas a la altura del pecho alto','Empuja hacia arriba y junta al final','Baja de forma controlada'],ytSearch:'press inclinado mancuernas tecnica'},
+  {id:'e006',name:'Aperturas con Mancuernas',cat:'Pecho',eq:'Mancuernas',muscles:['Pecho','Bíceps (cabeza larga)'],muscleMap:['pecho'],emoji:'🥊',desc:'Movimiento de estiramiento para el pecho. Excelente para la definición muscular.',steps:['Túmbate con mancuernas sobre el pecho','Abre los brazos con codo ligeramente doblado','Baja hasta sentir estiramiento en el pecho','Cierra los brazos como si abrazaras un árbol'],ytSearch:'aperturas mancuernas pecho tecnica'},
+  {id:'e007',name:'Cruce de Poleas',cat:'Pecho',eq:'Polea',muscles:['Pecho','Deltoides Ant.'],muscleMap:['pecho'],emoji:'⚡',desc:'Perfecto para finalizar el entrenamiento de pecho con contracción máxima.',steps:['De pie entre dos poleas altas','Agarra las poleas con brazos extendidos','Trae las manos hacia adelante y abajo','Contrae el pecho al máximo al final'],ytSearch:'cruce poleas pecho tecnica'},
+  {id:'e008',name:'Flexiones',cat:'Pecho',eq:'Peso Corporal',muscles:['Pecho','Tríceps','Deltoides Ant.'],muscleMap:['pecho','triceps','hombros'],emoji:'💪',desc:'El clásico básico. Sin equipamiento, trabaja pecho, tríceps y hombros.',steps:['Manos algo más anchas que los hombros','Cuerpo recto de cabeza a talones','Baja el pecho hasta casi tocar el suelo','Empuja hacia arriba completamente'],ytSearch:'flexiones tecnica correcta'},
+  {id:'e009',name:'Fondos para Pecho',cat:'Pecho',eq:'Peso Corporal',muscles:['Pecho Inferior','Tríceps'],muscleMap:['pecho','triceps'],emoji:'💪',desc:'Fondos con inclinación hacia adelante para enfatizar el pecho inferior.',steps:['Agarra las barras paralelas','Inclínate hacia adelante 30-45 grados','Baja hasta que los codos estén a 90 grados','Empuja hacia arriba manteniendo la inclinación'],ytSearch:'fondos pecho paralelas tecnica'},
+  {id:'e010',name:'Press de Pecho en Máquina',cat:'Pecho',eq:'Máquina',muscles:['Pecho','Tríceps'],muscleMap:['pecho','triceps'],emoji:'🔩',desc:'Ideal para principiantes o para finalizar el entrenamiento con mayor volumen.',steps:['Ajusta el asiento para que las asas estén a altura del pecho','Siéntate con espalda apoyada','Empuja hacia adelante hasta casi extender','Vuelve de forma controlada'],ytSearch:'press pecho maquina tecnica'},
+  {id:'e011',name:'Pec Deck / Mariposa',cat:'Pecho',eq:'Máquina',muscles:['Pecho'],muscleMap:['pecho'],emoji:'🔩',desc:'Aislamiento puro del pecho. Ideal para congestión y definición.',steps:['Siéntate con codos apoyados en las almohadillas','Junta los brazos hacia el centro','Contrae el pecho al máximo','Vuelve lentamente sin perder tensión'],ytSearch:'pec deck mariposa maquina pecho'},
+  // ── ESPALDA ──
+  {id:'e012',name:'Peso Muerto',cat:'Espalda',eq:'Barra',muscles:['Lumbar','Isquiotibiales','Glúteos','Trapecios'],muscleMap:['espalda','lumbar','isquiotibiales','gluteos'],emoji:'🏋️',desc:'El rey de los ejercicios. Trabaja casi todos los músculos del cuerpo.',steps:['Barra sobre los pies, separados al ancho de caderas','Agarra la barra justo fuera de las piernas','Espalda recta, pecho arriba, empuja el suelo','Sube hasta quedar erguido completamente'],ytSearch:'peso muerto tecnica correcta español'},
+  {id:'e013',name:'Remo con Barra',cat:'Espalda',eq:'Barra',muscles:['Dorsal','Romboides','Bíceps'],muscleMap:['espalda'],emoji:'🏋️',desc:'Fundamental para construir grosor en la espalda.',steps:['Inclínate hacia adelante ~45 grados con rodillas flexionadas','Agarra la barra con agarre supino o prono','Tira la barra hacia el abdomen bajo','Baja de forma controlada'],ytSearch:'remo barra espalda tecnica'},
+  {id:'e014',name:'Remo en T',cat:'Espalda',eq:'Barra',muscles:['Dorsal Medio','Romboides'],muscleMap:['espalda'],emoji:'🏋️',desc:'Excelente para trabajar el grosor de la espalda media.',steps:['Pecho apoyado en el soporte o inclinado sobre la barra','Agarra las asas con ambas manos','Tira hacia el pecho contrayendo la espalda','Baja controlado'],ytSearch:'remo en t espalda tecnica'},
+  {id:'e015',name:'Dominadas',cat:'Espalda',eq:'Peso Corporal',muscles:['Dorsal','Bíceps','Romboides'],muscleMap:['espalda','biceps'],emoji:'💪',desc:'El mejor ejercicio para el dorsal. Si no puedes hacer una, usa banda de asistencia.',steps:['Agarra la barra con agarre prono (palmas afuera)','Cuelga con brazos extendidos','Tira del cuerpo hacia arriba hasta que la barbilla supere la barra','Baja lentamente'],ytSearch:'dominadas tecnica correcta'],
+  {id:'e016',name:'Dominadas Supinas',cat:'Espalda',eq:'Peso Corporal',muscles:['Dorsal','Bíceps'],muscleMap:['espalda','biceps'],emoji:'💪',desc:'Más fáciles que las dominadas pronadas y con mayor activación del bíceps.',steps:['Agarra la barra con palmas hacia ti','Cuelga con brazos extendidos','Tira del cuerpo hacia arriba','Baja de forma controlada'],ytSearch:'dominadas supinas tecnica'},
+  {id:'e017',name:'Jalón al Pecho',cat:'Espalda',eq:'Polea',muscles:['Dorsal','Bíceps'],muscleMap:['espalda','biceps'],emoji:'⚡',desc:'Alternativa a las dominadas. Perfecto para trabajar el dorsal con control de carga.',steps:['Siéntate en la máquina con los muslos sujetos','Agarra la barra con agarre amplio','Tira hacia el pecho sacando pecho','Controla la subida sin soltar'],ytSearch:'jalon al pecho tecnica dorsal'},
+  {id:'e018',name:'Remo en Polea Baja',cat:'Espalda',eq:'Polea',muscles:['Espalda Media','Dorsal','Bíceps'],muscleMap:['espalda'],emoji:'⚡',desc:'Trabajo de espalda en posición sentada, excelente para el grosor.',steps:['Siéntate frente a la polea baja','Agarra el triángulo con brazos extendidos','Tira hacia el abdomen contrayendo omóplatos','Vuelve lentamente'],ytSearch:'remo polea baja espalda tecnica'},
+  {id:'e019',name:'Remo con Mancuerna',cat:'Espalda',eq:'Mancuernas',muscles:['Dorsal','Romboides'],muscleMap:['espalda'],emoji:'🥊',desc:'Unilateral. Permite mayor rango de movimiento y corregir asimetrías.',steps:['Apoya rodilla y mano en el banco','Mancuerna colgando con brazo extendido','Tira la mancuerna hacia la cadera','Baja controlado'],ytSearch:'remo mancuerna espalda tecnica'},
+  {id:'e020',name:'Face Pull',cat:'Espalda',eq:'Polea',muscles:['Deltoides Post.','Manguito Rotador'],muscleMap:['hombros','espalda'],emoji:'⚡',desc:'Fundamental para la salud del hombro. Trabaja el deltoides posterior y rotadores.',steps:['Polea alta con cuerda','De pie o sentado, tira hacia la cara','Codos hacia fuera y arriba al final','Contrae los hombros posteriores'],ytSearch:'face pull hombro posterior tecnica'},
+  {id:'e021',name:'Peso Muerto Rumano',cat:'Espalda',eq:'Barra',muscles:['Isquiotibiales','Lumbar','Glúteos'],muscleMap:['lumbar','isquiotibiales','gluteos'],emoji:'🏋️',desc:'Enfocado en isquiotibiales y glúteos. Mantén la espalda recta siempre.',steps:['De pie con barra a la cadera','Baja la barra deslizando por las piernas','Dobla cadera atrás manteniendo espalda recta','Sube contrayendo glúteos e isquios'],ytSearch:'peso muerto rumano tecnica isquiotibiales'},
+  {id:'e022',name:'Hiperextensión',cat:'Espalda',eq:'Máquina',muscles:['Lumbar','Glúteos'],muscleMap:['lumbar','gluteos'],emoji:'🔩',desc:'Fortalece la zona lumbar. Imprescindible para prevenir lesiones.',steps:['Apoya las caderas en el soporte con pies sujetos','Baja el torso hacia el suelo','Sube hasta quedar alineado o ligeramente más','Contrae glúteos en lo alto'],ytSearch:'hiperextension lumbar tecnica'},
+  {id:'e023',name:'Buenos Días',cat:'Espalda',eq:'Barra',muscles:['Lumbar','Isquiotibiales'],muscleMap:['lumbar','isquiotibiales'],emoji:'🏋️',desc:'Ejercicio clásico para lumbar e isquiotibiales. Usa poco peso inicialmente.',steps:['Barra sobre trapecios, pies al ancho de hombros','Dobla la cadera hacia adelante con espalda recta','Baja hasta sentir estiramiento en isquios','Sube contrayendo la cadera'],ytSearch:'buenos dias ejercicio lumbar tecnica'},
+  // ── HOMBROS ──
+  {id:'e024',name:'Press Militar con Barra',cat:'Hombros',eq:'Barra',muscles:['Deltoides','Tríceps'],muscleMap:['hombros','triceps'],emoji:'🏋️',desc:'El básico de hombros. De pie o sentado, empuja la barra por encima de la cabeza.',steps:['De pie o sentado, barra a la altura del pecho','Agarre al ancho de hombros','Empuja verticalmente hasta extender los brazos','Baja de forma controlada al pecho'],ytSearch:'press militar barra hombros tecnica'},
+  {id:'e025',name:'Press de Hombros con Mancuernas',cat:'Hombros',eq:'Mancuernas',muscles:['Deltoides','Tríceps'],muscleMap:['hombros','triceps'],emoji:'🥊',desc:'Más libertad de movimiento que con barra. Trabaja estabilizadores.',steps:['Sentado o de pie con mancuernas a la altura del hombro','Empuja hacia arriba','Junta ligeramente al final sin tocar','Baja controlado a la posición inicial'],ytSearch:'press hombros mancuernas tecnica'},
+  {id:'e026',name:'Press Arnold',cat:'Hombros',eq:'Mancuernas',muscles:['Todos los Deltoides'],muscleMap:['hombros'],emoji:'🥊',desc:'Creado por Arnold. Trabaja todos los haces del deltoides en un solo movimiento.',steps:['Mancuernas frente al pecho, palmas hacia ti','Gira las palmas hacia afuera al empujar','Sube hasta extender completamente','Invierte el movimiento al bajar'],ytSearch:'press arnold hombros tecnica'},
+  {id:'e027',name:'Elevaciones Laterales',cat:'Hombros',eq:'Mancuernas',muscles:['Deltoides Lateral'],muscleMap:['hombros'],emoji:'🥊',desc:'El mejor para el deltoides lateral. Clave para unos hombros anchos.',steps:['De pie con mancuernas a los lados','Eleva los brazos lateralmente hasta la altura del hombro','Codo ligeramente doblado, meñique arriba','Baja lentamente'],ytSearch:'elevaciones laterales hombros mancuernas'},
+  {id:'e028',name:'Elevaciones Frontales',cat:'Hombros',eq:'Mancuernas',muscles:['Deltoides Anterior'],muscleMap:['hombros'],emoji:'🥊',desc:'Para el deltoides frontal. Alternar o simultáneo.',steps:['De pie con mancuernas frente a los muslos','Eleva un brazo hacia adelante hasta la altura del hombro','Mantén el codo ligeramente doblado','Baja controlado'],ytSearch:'elevaciones frontales hombros tecnica'},
+  {id:'e029',name:'Pájaro / Vuelos Posteriores',cat:'Hombros',eq:'Mancuernas',muscles:['Deltoides Posterior','Romboides'],muscleMap:['hombros','espalda'],emoji:'🥊',desc:'Para el deltoides posterior. Clave para equilibrar los hombros y mejorar la postura.',steps:['Inclinado hacia adelante ~45 grados','Mancuernas colgando con codos ligeramente doblados','Eleva los brazos lateralmente','Contrae los deltoides posteriores en lo alto'],ytSearch:'pajaro vuelos posteriores hombros tecnica'},
+  {id:'e030',name:'Elevaciones Laterales en Polea',cat:'Hombros',eq:'Polea',muscles:['Deltoides Lateral'],muscleMap:['hombros'],emoji:'⚡',desc:'Mejor tensión constante que con mancuernas. Ideal como finalizador.',steps:['Polea baja a un lado del cuerpo','Agarra con la mano contraria','Eleva lateralmente hasta la altura del hombro','Baja controlado'],ytSearch:'elevaciones laterales polea hombros'},
+  {id:'e031',name:'Remo al Mentón',cat:'Hombros',eq:'Barra',muscles:['Deltoides Lateral','Trapecios'],muscleMap:['hombros','espalda'],emoji:'🏋️',desc:'Trabaja hombros y trapecios. Cuidado con el agarre: no demasiado estrecho.',steps:['De pie con barra frente a los muslos','Tira la barra hacia arriba a lo largo del cuerpo','Codos por encima de las muñecas','Baja controlado'],ytSearch:'remo menton hombros trapecios tecnica'},
+  {id:'e032',name:'Press de Hombros en Máquina',cat:'Hombros',eq:'Máquina',muscles:['Deltoides','Tríceps'],muscleMap:['hombros','triceps'],emoji:'🔩',desc:'Estable y seguro. Ideal para principiantes o altos volúmenes.',steps:['Ajusta el asiento a la altura correcta','Agarra las asas a la altura del hombro','Empuja hasta extender','Baja de forma controlada'],ytSearch:'press hombros maquina tecnica'},
+  {id:'e033',name:'Encogimientos con Barra',cat:'Hombros',eq:'Barra',muscles:['Trapecios'],muscleMap:['espalda','hombros'],emoji:'🏋️',desc:'Para construir trapecios grandes. Sube los hombros lo más arriba posible.',steps:['De pie con barra cogida con agarre prono','Encoge los hombros hacia las orejas','Mantén 1 segundo en lo alto','Baja completamente'],ytSearch:'encogimientos barra trapecios tecnica'},
+  // ── BRAZOS ──
+  {id:'e034',name:'Curl con Barra',cat:'Brazos',eq:'Barra',muscles:['Bíceps'],muscleMap:['biceps'],emoji:'💪',desc:'El clásico para bíceps. Máxima carga posible con buena técnica.',steps:['De pie con barra en agarre supino','Brazos extendidos, codos pegados al cuerpo','Sube la barra contrayendo el bíceps','Baja lentamente sin soltar la tensión'],ytSearch:'curl barra biceps tecnica correcta'},
+  {id:'e035',name:'Curl con Barra EZ',cat:'Brazos',eq:'Barra',muscles:['Bíceps','Braquial'],muscleMap:['biceps'],emoji:'💪',desc:'Más cómodo para las muñecas que la barra recta. Activa también el braquial.',steps:['Agarra la barra EZ por las partes inclinadas','Codos fijos a los lados del cuerpo','Sube contrayendo el bíceps','Baja controlado'],ytSearch:'curl barra ez biceps tecnica'},
+  {id:'e036',name:'Curl con Mancuerna',cat:'Brazos',eq:'Mancuernas',muscles:['Bíceps'],muscleMap:['biceps'],emoji:'🥊',desc:'Unilateral y con supinación completa. Máxima contracción del bíceps.',steps:['De pie o sentado con mancuernas','Sube alternando o juntos girando la muñeca','Supina la palma al subir','Baja de forma controlada'],ytSearch:'curl mancuerna biceps tecnica'},
+  {id:'e037',name:'Curl Martillo',cat:'Brazos',eq:'Mancuernas',muscles:['Braquial','Braquiorradial'],muscleMap:['biceps'],emoji:'🥊',desc:'Agarre neutro. Trabaja el braquial y el braquiorradial para mayor grosor del brazo.',steps:['De pie con mancuernas en agarre neutro (pulgar arriba)','Sube las mancuernas sin girar la muñeca','Contrae en lo alto','Baja controlado'],ytSearch:'curl martillo brazos tecnica'},
+  {id:'e038',name:'Curl en Scott',cat:'Brazos',eq:'Barra',muscles:['Bíceps'],muscleMap:['biceps'],emoji:'🏋️',desc:'Aislamiento total del bíceps. No puedes hacer trampa con el cuerpo.',steps:['Apoya los brazos en el banco Scott inclinado','Agarra la barra EZ o recta','Sube contrayendo el bíceps completamente','Baja LENTO para máximo estiramiento'],ytSearch:'curl scott banco predicador biceps'},
+  {id:'e039',name:'Curl Concentrado',cat:'Brazos',eq:'Mancuernas',muscles:['Bíceps (pico)'],muscleMap:['biceps'],emoji:'🥊',desc:'Máximo aislamiento y pico del bíceps. El favorito de Arnold.',steps:['Sentado, codo apoyado en la cara interna del muslo','Sube la mancuerna girando la muñeca','Aprieta el bíceps en lo alto','Baja hasta extender completamente'],ytSearch:'curl concentrado biceps pico tecnica'},
+  {id:'e040',name:'Curl en Polea',cat:'Brazos',eq:'Polea',muscles:['Bíceps'],muscleMap:['biceps'],emoji:'⚡',desc:'Tensión constante durante todo el recorrido. Excelente finalizador.',steps:['Polea baja con barra recta o cuerda','De pie frente a la polea','Sube manteniendo codos fijos','Baja controlado'],ytSearch:'curl polea biceps tension constante'},
+  {id:'e041',name:'Curl Inclinado con Mancuerna',cat:'Brazos',eq:'Mancuernas',muscles:['Bíceps (cabeza larga)'],muscleMap:['biceps'],emoji:'🥊',desc:'Estiramiento máximo de la cabeza larga del bíceps. Para mayor pico.',steps:['Banco inclinado a 45-60 grados','Deja los brazos colgar completamente','Sube rotando la muñeca','Mantén 1 segundo en la cima'],ytSearch:'curl inclinado mancuerna cabeza larga biceps'},
+  {id:'e042',name:'Press Banca Agarre Estrecho',cat:'Brazos',eq:'Barra',muscles:['Tríceps','Pecho'],muscleMap:['triceps','pecho'],emoji:'🏋️',desc:'El mejor básico para tríceps. Carga alta con movimiento natural.',steps:['Banco plano, agarre al ancho de hombros o más estrecho','Baja la barra al pecho con codos cerca del cuerpo','Empuja hasta extender completamente','Codos no demasiado adentro'],ytSearch:'press banca agarre estrecho triceps tecnica'},
+  {id:'e043',name:'Extensión de Tríceps en Polea',cat:'Brazos',eq:'Polea',muscles:['Tríceps'],muscleMap:['triceps'],emoji:'⚡',desc:'El ejercicio más popular para tríceps. Excelente para volumen y definición.',steps:['Polea alta con barra recta o cuerda','Codos pegados a los costados','Empuja hacia abajo hasta extender completamente','Sube controlado sin separar los codos'],ytSearch:'extension triceps polea cuerda tecnica'},
+  {id:'e044',name:'Extensión de Tríceps Tras Nuca',cat:'Brazos',eq:'Mancuernas',muscles:['Tríceps (cabeza larga)'],muscleMap:['triceps'],emoji:'🥊',desc:'Trabaja la cabeza larga del tríceps. Excelente para el volumen del brazo.',steps:['De pie o sentado con mancuerna con ambas manos','Lleva la mancuerna detrás de la cabeza','Extiende los codos hacia arriba','Baja lentamente hasta el estiramiento máximo'],ytSearch:'extension triceps tras nuca mancuerna'},
+  {id:'e045',name:'Press Francés',cat:'Brazos',eq:'Barra',muscles:['Tríceps'],muscleMap:['triceps'],emoji:'🏋️',desc:'Skull crusher. Para construir masa en los tríceps.',steps:['Banco plano con barra EZ o recta','Baja la barra hacia la frente flexionando codos','Codos apuntando al techo sin abrirse','Extiende para volver a la posición inicial'],ytSearch:'press frances skull crusher triceps tecnica'},
+  {id:'e046',name:'Fondos para Tríceps',cat:'Brazos',eq:'Peso Corporal',muscles:['Tríceps'],muscleMap:['triceps'],emoji:'💪',desc:'En banco o paralelas con cuerpo erguido. Trabajo intenso de tríceps.',steps:['Banco detrás, manos en el borde','Baja el cuerpo doblando los codos','Mantén el cuerpo pegado al banco','Empuja hasta extender los brazos'],ytSearch:'fondos triceps banco paralelas tecnica'},
+  {id:'e047',name:'Flexiones Diamante',cat:'Brazos',eq:'Peso Corporal',muscles:['Tríceps','Pecho'],muscleMap:['triceps','pecho'],emoji:'💪',desc:'Manos formando un diamante. Máximo trabajo de tríceps con peso corporal.',steps:['Manos juntas bajo el pecho formando triángulo','Cuerpo recto como tabla','Baja doblando los codos hacia atrás','Empuja hasta extender'],ytSearch:'flexiones diamante triceps tecnica'},
+  {id:'e048',name:'Extensión Tríceps Polea Alta',cat:'Brazos',eq:'Polea',muscles:['Tríceps (cabeza larga)'],muscleMap:['triceps'],emoji:'⚡',desc:'Overhead extension en polea. Para la cabeza larga del tríceps.',steps:['De espaldas a la polea alta con cuerda','Inclínate ligeramente hacia adelante','Extiende los codos hacia adelante','Vuelve controlado detrás de la cabeza'],ytSearch:'extension triceps polea alta overhead'},
+  {id:'e049',name:'Patada de Tríceps',cat:'Brazos',eq:'Mancuernas',muscles:['Tríceps'],muscleMap:['triceps'],emoji:'🥊',desc:'Aislamiento del tríceps. Mantén el brazo superior paralelo al suelo.',steps:['Inclinado con brazo superior paralelo al suelo','Codo a 90 grados','Extiende el brazo hacia atrás completamente','Contrae en lo alto'],ytSearch:'patada triceps mancuerna tecnica'},
+  // ── PIERNAS ──
+  {id:'e050',name:'Sentadilla con Barra',cat:'Piernas',eq:'Barra',muscles:['Cuádriceps','Glúteos','Isquiotibiales'],muscleMap:['cuadriceps','gluteos','isquiotibiales'],emoji:'🏋️',desc:'La reina de los ejercicios. Trabaja todo el tren inferior.',steps:['Barra sobre los trapecios, pies al ancho de hombros','Baja como si fueras a sentarte manteniendo espalda recta','Rodillas en línea con los pies','Sube empujando el suelo'],ytSearch:'sentadilla barra tecnica correcta'},
+  {id:'e051',name:'Sentadilla Frontal',cat:'Piernas',eq:'Barra',muscles:['Cuádriceps','Core'],muscleMap:['cuadriceps'],emoji:'🏋️',desc:'Barra frente al cuerpo. Mayor trabajo de cuádriceps y core.',steps:['Barra apoyada en los deltoides anteriores','Codos altos, tronco más erguido','Baja hasta paralelo o más','Sube empujando con los cuádriceps'],ytSearch:'sentadilla frontal tecnica'},
+  {id:'e052',name:'Prensa de Piernas',cat:'Piernas',eq:'Máquina',muscles:['Cuádriceps','Glúteos'],muscleMap:['cuadriceps','gluteos'],emoji:'🔩',desc:'Segura y efectiva. Puedes usar mucha carga con menor riesgo.',steps:['Siéntate en la prensa, pies a la anchura de hombros','Suelta los frenos y dobla rodillas','Baja hasta 90 grados sin que la espalda se despegue','Empuja completamente sin bloquear rodillas'],ytSearch:'prensa piernas tecnica correcta'},
+  {id:'e053',name:'Hack Squat',cat:'Piernas',eq:'Máquina',muscles:['Cuádriceps'],muscleMap:['cuadriceps'],emoji:'🔩',desc:'Enfoque en cuádriceps. Los pies adelantados aíslan los cuádriceps.',steps:['Espalda apoyada en la máquina','Pies en la plataforma al ancho de hombros','Baja controlado hasta 90 grados','Empuja hacia arriba'],ytSearch:'hack squat maquina tecnica cuadriceps'},
+  {id:'e054',name:'Sentadilla Búlgara',cat:'Piernas',eq:'Mancuernas',muscles:['Cuádriceps','Glúteos'],muscleMap:['cuadriceps','gluteos'],emoji:'🥊',desc:'Unilateral. Corrige asimetrías y trabaja el equilibrio.',steps:['Pie trasero apoyado en banco','Pie delantero alejado del banco','Baja hasta que la rodilla trasera casi toque el suelo','Sube empujando con el talón delantero'],ytSearch:'sentadilla bulgara mancuernas tecnica'},
+  {id:'e055',name:'Zancadas Caminando',cat:'Piernas',eq:'Mancuernas',muscles:['Cuádriceps','Glúteos'],muscleMap:['cuadriceps','gluteos'],emoji:'🥊',desc:'Dinámicas y funcionales. Excelente para glúteos y cuádriceps.',steps:['De pie con mancuernas a los lados','Da un paso adelante grande','Baja la rodilla trasera al suelo','Sube y da el siguiente paso'],ytSearch:'zancadas caminando mancuernas tecnica'},
+  {id:'e056',name:'Extensión de Cuádriceps',cat:'Piernas',eq:'Máquina',muscles:['Cuádriceps'],muscleMap:['cuadriceps'],emoji:'🔩',desc:'Aislamiento puro del cuádriceps. Ideal para finalizar piernas.',steps:['Siéntate en la máquina, rodillas al borde','Extiende las piernas hasta arriba','Contrae el cuádriceps en lo alto','Baja lentamente'],ytSearch:'extension cuadriceps maquina tecnica'},
+  {id:'e057',name:'Curl Femoral',cat:'Piernas',eq:'Máquina',muscles:['Isquiotibiales'],muscleMap:['isquiotibiales'],emoji:'🔩',desc:'Aislamiento de isquiotibiales. Tumbado o sentado.',steps:['Túmbate boca abajo en la máquina','Talones bajo la almohadilla','Dobla las rodillas llevando talones a los glúteos','Baja controlado'],ytSearch:'curl femoral isquiotibiales maquina tecnica'},
+  {id:'e058',name:'Elevación de Talones de Pie',cat:'Piernas',eq:'Máquina',muscles:['Gemelos'],muscleMap:['gemelos'],emoji:'🔩',desc:'Para construir gemelos grandes. Necesitan mucho volumen.',steps:['De pie en la máquina o escalón','Talones abajo para estirar','Sube en puntillas lo más alto posible','Mantén 1 segundo en lo alto'],ytSearch:'elevacion talones gemelos pie tecnica'},
+  {id:'e059',name:'Elevación de Talones Sentado',cat:'Piernas',eq:'Máquina',muscles:['Sóleo'],muscleMap:['gemelos'],emoji:'🔩',desc:'Para el músculo sóleo que da profundidad a la pantorrilla.',steps:['Sentado con almohadillas sobre los muslos','Talones en el escalón','Sube lo más alto posible','Baja con estiramiento completo'],ytSearch:'elevacion talones sentado soleo maquina'},
+  {id:'e060',name:'Hip Thrust',cat:'Piernas',eq:'Barra',muscles:['Glúteos','Isquiotibiales'],muscleMap:['gluteos','isquiotibiales'],emoji:'🏋️',desc:'El mejor para glúteos. Activación máxima con carga pesada.',steps:['Espalda alta apoyada en banco','Barra sobre las caderas con almohadilla','Empuja las caderas hacia arriba','Aprieta los glúteos en lo alto'],ytSearch:'hip thrust gluteos barra tecnica'},
+  {id:'e061',name:'Puente de Glúteos',cat:'Piernas',eq:'Peso Corporal',muscles:['Glúteos'],muscleMap:['gluteos'],emoji:'💪',desc:'Versión bodyweight del hip thrust. Perfecto para empezar o calentar.',steps:['Tumbado boca arriba, pies apoyados en el suelo','Sube las caderas apretando glúteos','Mantén 2 segundos arriba','Baja controlado'],ytSearch:'puente gluteos bodyweight tecnica'},
+  {id:'e062',name:'Salto al Cajón',cat:'Piernas',eq:'Peso Corporal',muscles:['Cuádriceps','Gemelos'],muscleMap:['cuadriceps','gemelos'],emoji:'💪',desc:'Potencia explosiva. Trabaja la fuerza reactiva de piernas.',steps:['De pie frente al cajón','Dobla rodillas y balancea los brazos','Salta sobre el cajón aterrizando suavemente','Baja caminando'],ytSearch:'salto cajon box jump tecnica'},
+  {id:'e063',name:'Step Up',cat:'Piernas',eq:'Mancuernas',muscles:['Cuádriceps','Glúteos'],muscleMap:['cuadriceps','gluteos'],emoji:'🥊',desc:'Funcional y unilateral. Para fuerza y estabilidad.',steps:['De pie frente al banco o cajón','Sube un pie al banco','Empuja con el talón para subir el cuerpo','Baja controlado'],ytSearch:'step up mancuernas tecnica piernas'},
+  {id:'e064',name:'Sentadilla Goblet',cat:'Piernas',eq:'Kettlebell',muscles:['Cuádriceps','Glúteos'],muscleMap:['cuadriceps','gluteos'],emoji:'🔔',desc:'Perfecta para aprender la sentadilla. El contrapeso ayuda con la postura.',steps:['Sostén la kettlebell frente al pecho','Pies al ancho de hombros o más','Baja profundo manteniendo el torso erguido','Sube empujando el suelo'],ytSearch:'sentadilla goblet kettlebell tecnica'},
+  {id:'e065',name:'Peso Muerto Sumo',cat:'Piernas',eq:'Barra',muscles:['Aductores','Glúteos','Isquiotibiales'],muscleMap:['gluteos','isquiotibiales'],emoji:'🏋️',desc:'Agarre más ancho que el convencional. Más enfoque en aductores y glúteos.',steps:['Pies más anchos que los hombros, puntas afuera','Agarre al ancho de las caderas o estrecho','Espalda recta, empuja el suelo','Sube manteniendo la barra cerca del cuerpo'],ytSearch:'peso muerto sumo tecnica aductores'},
   // ── CORE ──
-  {id:'e066',name:'Crunch',cat:'Core',eq:'Bodyweight',muscles:['Abs'],emoji:'💪'},
-  {id:'e067',name:'Plank',cat:'Core',eq:'Bodyweight',muscles:['Core','Abs'],emoji:'💪'},
-  {id:'e068',name:'Russian Twist',cat:'Core',eq:'Bodyweight',muscles:['Obliques'],emoji:'💪'},
-  {id:'e069',name:'Leg Raise',cat:'Core',eq:'Bodyweight',muscles:['Lower Abs','Hip Flexors'],emoji:'💪'},
-  {id:'e070',name:'Cable Crunch',cat:'Core',eq:'Cable',muscles:['Abs'],emoji:'⚡'},
-  {id:'e071',name:'Ab Rollout',cat:'Core',eq:'Bodyweight',muscles:['Core','Abs'],emoji:'💪'},
-  {id:'e072',name:'V-Up',cat:'Core',eq:'Bodyweight',muscles:['Abs'],emoji:'💪'},
-  {id:'e073',name:'Bicycle Crunch',cat:'Core',eq:'Bodyweight',muscles:['Abs','Obliques'],emoji:'💪'},
-  {id:'e074',name:'Mountain Climbers',cat:'Core',eq:'Bodyweight',muscles:['Core','Hip Flexors'],emoji:'💪'},
-  {id:'e075',name:'Side Plank',cat:'Core',eq:'Bodyweight',muscles:['Obliques'],emoji:'💪'},
-  {id:'e076',name:'Dead Bug',cat:'Core',eq:'Bodyweight',muscles:['Core','Abs'],emoji:'💪'},
-  {id:'e077',name:'Hanging Leg Raise',cat:'Core',eq:'Bodyweight',muscles:['Lower Abs'],emoji:'💪'},
-
+  {id:'e066',name:'Crunch Abdominal',cat:'Core',eq:'Peso Corporal',muscles:['Abdominales'],muscleMap:['abs'],emoji:'💪',desc:'El básico abdominal. Concentra el movimiento en el recto abdominal.',steps:['Tumbado con rodillas dobladas','Manos detrás de la cabeza o cruzadas','Sube el torso contrayendo el abdomen','Baja sin apoyar completamente la cabeza'],ytSearch:'crunch abdominal tecnica correcta'},
+  {id:'e067',name:'Plancha',cat:'Core',eq:'Peso Corporal',muscles:['Core','Abdominales'],muscleMap:['abs'],emoji:'💪',desc:'Isométrico fundamental. Trabaja todo el core de forma estática.',steps:['Apoya los antebrazos en el suelo','Cuerpo recto en posición de tabla','Activa el abdomen sin dejar caer la cadera','Aguanta el tiempo indicado respirando'],ytSearch:'plancha abdominal tecnica tiempo'},
+  {id:'e068',name:'Giro Ruso',cat:'Core',eq:'Peso Corporal',muscles:['Oblicuos','Abdominales'],muscleMap:['abs'],emoji:'💪',desc:'Para los oblicuos. Puedes añadir peso para más intensidad.',steps:['Sentado a 45 grados con pies levantados','Manos juntas o con peso frente al pecho','Gira el torso de lado a lado','Toca el suelo a cada lado si puedes'],ytSearch:'giro ruso oblicuos abdominales tecnica'},
+  {id:'e069',name:'Elevación de Piernas',cat:'Core',eq:'Peso Corporal',muscles:['Abdominales Inferiores','Flexores Cadera'],muscleMap:['abs'],emoji:'💪',desc:'Para la zona abdominal baja. Mantén la zona lumbar pegada al suelo.',steps:['Tumbado con manos bajo los glúteos','Piernas extendidas o ligeramente dobladas','Sube las piernas hasta 90 grados','Baja lentamente sin tocar el suelo'],ytSearch:'elevacion piernas abdominales inferiores'},
+  {id:'e070',name:'Crunch en Polea',cat:'Core',eq:'Polea',muscles:['Abdominales'],muscleMap:['abs'],emoji:'⚡',desc:'Permite añadir carga progresiva. Excelente para construir volumen abdominal.',steps:['De rodillas frente a la polea alta','Agarra la cuerda con ambas manos','Dobla el torso hacia abajo contrayendo el abdomen','Vuelve de forma controlada'],ytSearch:'crunch polea abdominales carga progresiva'},
+  {id:'e071',name:'Rueda Abdominal',cat:'Core',eq:'Peso Corporal',muscles:['Core','Abdominales'],muscleMap:['abs'],emoji:'💪',desc:'Uno de los ejercicios más difíciles para el core. Trabaja todo el abdomen.',steps:['De rodillas con la rueda frente a ti','Rueda hacia adelante extendiendo el cuerpo','Mantén el core muy activado','Vuelve contrayendo el abdomen'],ytSearch:'rueda abdominal ab roller tecnica'},
+  {id:'e072',name:'V-Up',cat:'Core',eq:'Peso Corporal',muscles:['Abdominales'],muscleMap:['abs'],emoji:'💪',desc:'Combina la elevación de piernas y crunch. Alta intensidad abdominal.',steps:['Tumbado completamente extendido','Sube a la vez piernas y torso','Toca los pies con las manos en lo alto','Baja controlado a la posición inicial'],ytSearch:'v up ejercicio abdominales tecnica'},
+  {id:'e073',name:'Crunch Bicicleta',cat:'Core',eq:'Peso Corporal',muscles:['Abdominales','Oblicuos'],muscleMap:['abs'],emoji:'💪',desc:'Trabaja oblicuos y recto abdominal simultáneamente.',steps:['Tumbado con manos detrás de la cabeza','Piernas elevadas a 45 grados','Acerca codo al rodilla contraria','Alterna los lados en movimiento de pedaleo'],ytSearch:'crunch bicicleta oblicuos tecnica'},
+  {id:'e074',name:'Escaladores',cat:'Core',eq:'Peso Corporal',muscles:['Core','Flexores Cadera'],muscleMap:['abs'],emoji:'💪',desc:'Cardio y core combinados. Ritmo rápido para máxima intensidad.',steps:['Posición de plancha alta','Lleva una rodilla hacia el pecho','Alterna rápidamente las piernas','Mantén las caderas bajas'],ytSearch:'escaladores mountain climbers core tecnica'},
+  {id:'e075',name:'Plancha Lateral',cat:'Core',eq:'Peso Corporal',muscles:['Oblicuos'],muscleMap:['abs'],emoji:'💪',desc:'Isométrico para oblicuos. Clave para la estabilidad lateral del core.',steps:['Apoya el antebrazo lateral en el suelo','Cuerpo en línea recta lateral','Eleva las caderas para alinear el cuerpo','Aguanta el tiempo sin bajar la cadera'],ytSearch:'plancha lateral oblicuos tecnica'},
+  {id:'e076',name:'Dead Bug',cat:'Core',eq:'Peso Corporal',muscles:['Core','Abdominales'],muscleMap:['abs'],emoji:'💪',desc:'Activa el core profundo. Perfecto para principiantes o rehabilitación.',steps:['Tumbado con brazos al techo y rodillas a 90 grados','Baja el brazo derecho y pierna izquierda simultáneamente','Mantén la zona lumbar pegada al suelo','Vuelve al centro y alterna'],ytSearch:'dead bug ejercicio core activacion'},
+  {id:'e077',name:'Elevación Piernas Colgado',cat:'Core',eq:'Peso Corporal',muscles:['Abdominales Inferiores'],muscleMap:['abs'],emoji:'💪',desc:'La versión más difícil para el abdomen inferior. Requiere mucha fuerza.',steps:['Colgado de la barra con agarre prono','Piernas extendidas o dobladas','Sube las piernas hasta 90 grados o más','Baja lentamente con control'],ytSearch:'elevacion piernas colgado barra abdominales'},
   // ── CARDIO ──
-  {id:'e078',name:'Treadmill Run',cat:'Cardio',eq:'Machine',muscles:['Full Body'],emoji:'🏃'},
-  {id:'e079',name:'Cycling',cat:'Cardio',eq:'Machine',muscles:['Legs','Cardio'],emoji:'🚴'},
-  {id:'e080',name:'Jump Rope',cat:'Cardio',eq:'Bodyweight',muscles:['Calves','Cardio'],emoji:'🪂'},
-  {id:'e081',name:'Rowing Machine',cat:'Cardio',eq:'Machine',muscles:['Back','Legs','Arms'],emoji:'🚣'},
-  {id:'e082',name:'Stair Climber',cat:'Cardio',eq:'Machine',muscles:['Legs','Glutes'],emoji:'🏃'},
-  {id:'e083',name:'Elliptical',cat:'Cardio',eq:'Machine',muscles:['Full Body'],emoji:'🏃'}
+  {id:'e078',name:'Carrera en Cinta',cat:'Cardio',eq:'Máquina',muscles:['Cuerpo Completo'],muscleMap:[],emoji:'🏃',desc:'Cardio clásico. Mejora la resistencia cardiovascular.',steps:['Calienta 5 minutos caminando','Aumenta la velocidad gradualmente','Mantén una cadencia cómoda','Enfría los últimos 5 minutos'],ytSearch:'correr cinta programa principiante'},
+  {id:'e079',name:'Bicicleta Estática',cat:'Cardio',eq:'Máquina',muscles:['Piernas','Cardio'],muscleMap:['cuadriceps'],emoji:'🚴',desc:'Bajo impacto. Ideal si tienes problemas de rodillas.',steps:['Ajusta el asiento a la altura de la cadera','Pedalea a ritmo moderado para calentar','Varía la resistencia en intervalos','Mantén la espalda recta'],ytSearch:'bicicleta estatica entrenamiento'},
+  {id:'e080',name:'Comba / Saltar a la Cuerda',cat:'Cardio',eq:'Peso Corporal',muscles:['Gemelos','Cardio'],muscleMap:['gemelos'],emoji:'🪂',desc:'Quema muchas calorías en poco tiempo. Mejora la coordinación.',steps:['Agarra las asas a la altura de la cadera','Salta con ambos pies o alternando','Mantén los codos cerca del cuerpo','Comienza con 30 segundos y aumenta'],ytSearch:'saltar comba tecnica principiante'},
+  {id:'e081',name:'Máquina de Remo',cat:'Cardio',eq:'Máquina',muscles:['Espalda','Piernas','Brazos'],muscleMap:['espalda','cuadriceps'],emoji:'🚣',desc:'Cardio de cuerpo completo. Bajo impacto y altamente efectivo.',steps:['Pies en los pedales, agarra el mango','Empuja con las piernas primero','Luego inclina el torso atrás y tira con los brazos','Revierte el movimiento en orden'],ytSearch:'maquina remo rowing tecnica'},
+  {id:'e082',name:'Escaladora',cat:'Cardio',eq:'Máquina',muscles:['Piernas','Glúteos','Cardio'],muscleMap:['cuadriceps','gluteos'],emoji:'🏃',desc:'Simula subir escaleras. Muy efectiva para quemar calorías y tonificar piernas.',steps:['Sube a la máquina y agarra los pasamanos','Comienza a ritmo bajo','Pisa con todo el pie','Aumenta la velocidad según tu nivel'],ytSearch:'escaladora stairmaster entrenamiento'},
+  {id:'e083',name:'Elíptica',cat:'Cardio',eq:'Máquina',muscles:['Cuerpo Completo','Cardio'],muscleMap:[],emoji:'🏃',desc:'Bajo impacto. Trabaja piernas y brazos simultáneamente.',steps:['Ajusta la resistencia y el nivel de inclinación','Agarra los mangos móviles','Mueve piernas y brazos de forma coordinada','Mantén la espalda erguida'],ytSearch:'eliptica entrenamiento tecnica'}
 ];
 
 const PROGRAMS = [
-  {
-    id:'p001',
-    name:'StrongLifts 5×5',
-    desc:'The classic beginner barbell program. 3 days/week, alternating A/B workouts. Simple, effective, and battle-tested.',
-    emoji:'🏋️',
-    color:'#7c3aed',
-    level:'Beginner',
-    daysPerWeek:3,
-    duration:'12 weeks',
+  {id:'p001',name:'StrongLifts 5×5',desc:'El programa de fuerza más famoso. 3 días/semana alternando Entreno A y B. Ideal para principiantes que quieren ganar fuerza rápido.',emoji:'🏋️',color:'#7c3aed',level:'Principiante',daysPerWeek:3,duration:'12 semanas',
     days:[
-      {name:'Workout A',exercises:[
-        {id:'e050',sets:5,reps:'5',rest:180},
-        {id:'e001',sets:5,reps:'5',rest:180},
-        {id:'e013',sets:5,reps:'5',rest:180}
-      ]},
-      {name:'Workout B',exercises:[
-        {id:'e050',sets:5,reps:'5',rest:180},
-        {id:'e024',sets:5,reps:'5',rest:180},
-        {id:'e012',sets:1,reps:'5',rest:240}
-      ]}
+      {name:'Entreno A',exercises:[{id:'e050',sets:5,reps:'5',rest:180},{id:'e001',sets:5,reps:'5',rest:180},{id:'e013',sets:5,reps:'5',rest:180}]},
+      {name:'Entreno B',exercises:[{id:'e050',sets:5,reps:'5',rest:180},{id:'e024',sets:5,reps:'5',rest:180},{id:'e012',sets:1,reps:'5',rest:300}]}
     ]
   },
-  {
-    id:'p002',
-    name:'Push / Pull / Legs',
-    desc:'Classic 6-day split for intermediate lifters. Optimal frequency and volume for hypertrophy.',
-    emoji:'🔥',
-    color:'#ef4444',
-    level:'Intermediate',
-    daysPerWeek:6,
-    duration:'Ongoing',
+  {id:'p002',name:'Push / Pull / Piernas',desc:'El split clásico de 6 días para hipertrofia. Divide el cuerpo en empuje, tirón y piernas para máximo volumen y recuperación.',emoji:'🔥',color:'#ef4444',level:'Intermedio',daysPerWeek:6,duration:'Continuo',
     days:[
-      {name:'Push',exercises:[
-        {id:'e001',sets:4,reps:'6-10',rest:120},
-        {id:'e005',sets:3,reps:'8-12',rest:90},
-        {id:'e024',sets:4,reps:'6-10',rest:120},
-        {id:'e025',sets:3,reps:'10-15',rest:90},
-        {id:'e027',sets:4,reps:'12-20',rest:60},
-        {id:'e043',sets:3,reps:'10-15',rest:60},
-        {id:'e044',sets:3,reps:'10-15',rest:60}
-      ]},
-      {name:'Pull',exercises:[
-        {id:'e012',sets:4,reps:'4-6',rest:180},
-        {id:'e015',sets:3,reps:'6-10',rest:120},
-        {id:'e017',sets:3,reps:'10-12',rest:90},
-        {id:'e019',sets:3,reps:'8-12',rest:90},
-        {id:'e018',sets:3,reps:'10-15',rest:75},
-        {id:'e034',sets:3,reps:'10-15',rest:60},
-        {id:'e037',sets:4,reps:'10-15',rest:60}
-      ]},
-      {name:'Legs',exercises:[
-        {id:'e050',sets:4,reps:'6-10',rest:180},
-        {id:'e052',sets:3,reps:'10-15',rest:120},
-        {id:'e021',sets:3,reps:'8-12',rest:120},
-        {id:'e056',sets:3,reps:'12-15',rest:75},
-        {id:'e057',sets:3,reps:'10-12',rest:75},
-        {id:'e058',sets:4,reps:'12-20',rest:60}
-      ]}
+      {name:'Push (Empuje)',exercises:[{id:'e001',sets:4,reps:'6-10',rest:120},{id:'e005',sets:3,reps:'8-12',rest:90},{id:'e024',sets:4,reps:'6-10',rest:120},{id:'e025',sets:3,reps:'10-15',rest:90},{id:'e027',sets:4,reps:'12-20',rest:60},{id:'e043',sets:3,reps:'10-15',rest:60},{id:'e044',sets:3,reps:'10-15',rest:60}]},
+      {name:'Pull (Tirón)',exercises:[{id:'e012',sets:4,reps:'4-6',rest:180},{id:'e015',sets:3,reps:'6-10',rest:120},{id:'e017',sets:3,reps:'10-12',rest:90},{id:'e019',sets:3,reps:'8-12',rest:90},{id:'e018',sets:3,reps:'10-15',rest:75},{id:'e034',sets:3,reps:'10-15',rest:60},{id:'e037',sets:4,reps:'10-15',rest:60}]},
+      {name:'Piernas',exercises:[{id:'e050',sets:4,reps:'6-10',rest:180},{id:'e052',sets:3,reps:'10-15',rest:120},{id:'e021',sets:3,reps:'8-12',rest:120},{id:'e056',sets:3,reps:'12-15',rest:75},{id:'e057',sets:3,reps:'10-12',rest:75},{id:'e058',sets:4,reps:'12-20',rest:60}]}
     ]
   },
-  {
-    id:'p003',
-    name:'Starting Strength',
-    desc:'Mark Rippetoe\'s proven program. Focus on the big 4 lifts to build a strong foundation.',
-    emoji:'💪',
-    color:'#10b981',
-    level:'Beginner',
-    daysPerWeek:3,
-    duration:'6 months',
+  {id:'p003',name:'Starting Strength',desc:'El programa de Mark Rippetoe. Basado en los 4 levantamientos básicos con progresión lineal. El más eficaz para principiantes absolutos.',emoji:'💪',color:'#10b981',level:'Principiante',daysPerWeek:3,duration:'6 meses',
     days:[
-      {name:'Workout A',exercises:[
-        {id:'e050',sets:3,reps:'5',rest:180},
-        {id:'e001',sets:3,reps:'5',rest:180},
-        {id:'e012',sets:1,reps:'5',rest:300}
-      ]},
-      {name:'Workout B',exercises:[
-        {id:'e050',sets:3,reps:'5',rest:180},
-        {id:'e024',sets:3,reps:'5',rest:180},
-        {id:'e013',sets:3,reps:'5',rest:180}
-      ]}
+      {name:'Entreno A',exercises:[{id:'e050',sets:3,reps:'5',rest:180},{id:'e001',sets:3,reps:'5',rest:180},{id:'e012',sets:1,reps:'5',rest:300}]},
+      {name:'Entreno B',exercises:[{id:'e050',sets:3,reps:'5',rest:180},{id:'e024',sets:3,reps:'5',rest:180},{id:'e013',sets:3,reps:'5',rest:180}]}
     ]
   },
-  {
-    id:'p004',
-    name:'Upper / Lower Split',
-    desc:'4-day split with upper and lower body focus. Great for intermediate lifters wanting more volume.',
-    emoji:'⚡',
-    color:'#f59e0b',
-    level:'Intermediate',
-    daysPerWeek:4,
-    duration:'Ongoing',
+  {id:'p004',name:'Superior / Inferior',desc:'4 días a la semana dividiendo el cuerpo en tren superior e inferior. Perfecto para intermedios que quieren más volumen.',emoji:'⚡',color:'#f59e0b',level:'Intermedio',daysPerWeek:4,duration:'Continuo',
     days:[
-      {name:'Upper A (Strength)',exercises:[
-        {id:'e001',sets:4,reps:'3-5',rest:180},
-        {id:'e013',sets:4,reps:'3-5',rest:180},
-        {id:'e024',sets:3,reps:'6-8',rest:120},
-        {id:'e015',sets:3,reps:'6-8',rest:120},
-        {id:'e034',sets:3,reps:'8-10',rest:90},
-        {id:'e042',sets:3,reps:'8-10',rest:90}
-      ]},
-      {name:'Lower A (Strength)',exercises:[
-        {id:'e050',sets:4,reps:'3-5',rest:240},
-        {id:'e021',sets:3,reps:'6-8',rest:180},
-        {id:'e052',sets:3,reps:'8-10',rest:120},
-        {id:'e057',sets:3,reps:'8-10',rest:90},
-        {id:'e058',sets:4,reps:'10-15',rest:60}
-      ]},
-      {name:'Upper B (Hypertrophy)',exercises:[
-        {id:'e005',sets:4,reps:'8-12',rest:90},
-        {id:'e017',sets:4,reps:'8-12',rest:90},
-        {id:'e025',sets:3,reps:'10-15',rest:75},
-        {id:'e018',sets:3,reps:'10-15',rest:75},
-        {id:'e043',sets:3,reps:'12-15',rest:60},
-        {id:'e027',sets:4,reps:'15-20',rest:60}
-      ]},
-      {name:'Lower B (Hypertrophy)',exercises:[
-        {id:'e054',sets:4,reps:'8-12',rest:120},
-        {id:'e056',sets:4,reps:'10-15',rest:75},
-        {id:'e060',sets:3,reps:'8-12',rest:90},
-        {id:'e057',sets:3,reps:'12-15',rest:75},
-        {id:'e059',sets:4,reps:'12-20',rest:60}
-      ]}
+      {name:'Superior A (Fuerza)',exercises:[{id:'e001',sets:4,reps:'3-5',rest:180},{id:'e013',sets:4,reps:'3-5',rest:180},{id:'e024',sets:3,reps:'6-8',rest:120},{id:'e015',sets:3,reps:'6-8',rest:120},{id:'e034',sets:3,reps:'8-10',rest:90},{id:'e042',sets:3,reps:'8-10',rest:90}]},
+      {name:'Inferior A (Fuerza)',exercises:[{id:'e050',sets:4,reps:'3-5',rest:240},{id:'e021',sets:3,reps:'6-8',rest:180},{id:'e052',sets:3,reps:'8-10',rest:120},{id:'e057',sets:3,reps:'8-10',rest:90},{id:'e058',sets:4,reps:'10-15',rest:60}]},
+      {name:'Superior B (Hipertrofia)',exercises:[{id:'e005',sets:4,reps:'8-12',rest:90},{id:'e017',sets:4,reps:'8-12',rest:90},{id:'e025',sets:3,reps:'10-15',rest:75},{id:'e018',sets:3,reps:'10-15',rest:75},{id:'e043',sets:3,reps:'12-15',rest:60},{id:'e027',sets:4,reps:'15-20',rest:60}]},
+      {name:'Inferior B (Hipertrofia)',exercises:[{id:'e054',sets:4,reps:'8-12',rest:120},{id:'e056',sets:4,reps:'10-15',rest:75},{id:'e060',sets:3,reps:'8-12',rest:90},{id:'e057',sets:3,reps:'12-15',rest:75},{id:'e059',sets:4,reps:'12-20',rest:60}]}
     ]
   },
-  {
-    id:'p005',
-    name:'Full Body 3×/Week',
-    desc:'Hit every muscle 3 times a week. Ideal for beginners and those with limited training time.',
-    emoji:'🌟',
-    color:'#06b6d4',
-    level:'Beginner',
-    daysPerWeek:3,
-    duration:'Ongoing',
+  {id:'p005',name:'Cuerpo Completo 3×/Semana',desc:'Entrena cada músculo 3 veces por semana. Ideal para principiantes con tiempo limitado o quienes vuelven después de una pausa.',emoji:'🌟',color:'#06b6d4',level:'Principiante',daysPerWeek:3,duration:'Continuo',
     days:[
-      {name:'Full Body A',exercises:[
-        {id:'e050',sets:3,reps:'8-10',rest:120},
-        {id:'e001',sets:3,reps:'8-10',rest:120},
-        {id:'e013',sets:3,reps:'8-10',rest:120},
-        {id:'e024',sets:3,reps:'8-10',rest:120},
-        {id:'e067',sets:3,reps:'30-60s',rest:60}
-      ]},
-      {name:'Full Body B',exercises:[
-        {id:'e012',sets:3,reps:'5',rest:180},
-        {id:'e015',sets:3,reps:'5-8',rest:120},
-        {id:'e004',sets:3,reps:'8-12',rest:90},
-        {id:'e027',sets:3,reps:'12-15',rest:60},
-        {id:'e066',sets:3,reps:'15-20',rest:60}
-      ]}
+      {name:'Cuerpo Completo A',exercises:[{id:'e050',sets:3,reps:'8-10',rest:120},{id:'e001',sets:3,reps:'8-10',rest:120},{id:'e013',sets:3,reps:'8-10',rest:120},{id:'e024',sets:3,reps:'8-10',rest:120},{id:'e067',sets:3,reps:'30-60s',rest:60}]},
+      {name:'Cuerpo Completo B',exercises:[{id:'e012',sets:3,reps:'5',rest:180},{id:'e015',sets:3,reps:'5-8',rest:120},{id:'e004',sets:3,reps:'8-12',rest:90},{id:'e027',sets:3,reps:'12-15',rest:60},{id:'e066',sets:3,reps:'15-20',rest:60}]}
     ]
   }
 ];
