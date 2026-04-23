@@ -630,10 +630,10 @@ Views.exerciseDetail=function(id){
     return `<div class="hist-row"><span>${daysAgo(w.date)}</span><span style="color:var(--acc2);font-weight:600">${best?`${best.weight}${s.unit} × ${best.reps} reps`:'Sin datos'}</span></div>`;
   }).join('')||'<div style="color:var(--t3);font-size:14px;padding:8px 0">Sin historial todavía</div>';
   const stepsHTML=ex.steps?ex.steps.map((st,i)=>`<div class="step-row"><div class="step-num">${i+1}</div><div class="step-txt">${st}</div></div>`).join(''):'';
-  const ytQuery=encodeURIComponent(ex.ytSearch||ex.name+' tecnica correcta');
-  const ytEmbed=`https://www.youtube-nocookie.com/embed?listType=search&list=${ytQuery}&modestbranding=1&rel=0`;
+  const ytQuery=encodeURIComponent(ex.ytSearch||ex.name+' tecnica correcta español');
   const ytUrl=`https://www.youtube.com/results?search_query=${ytQuery}`;
-  const fallbackImg=EXERCISE_IMGS[id]||'';
+  const img0=EXERCISE_IMGS[id]||'';
+  const img1=img0?img0.replace('/0.jpg','/1.jpg'):'';
   document.getElementById('main').innerHTML=`
     <div class="subpage-header">
       <button class="back-btn" onclick="Router.back()">‹ Atrás</button>
@@ -641,7 +641,7 @@ Views.exerciseDetail=function(id){
     </div>
     <div class="ex-anim-hero" id="ex-anim-${id}">
       <div class="ex-anim-loading">
-        ${fallbackImg?`<img id="ex-hero-img-${id}" src="${fallbackImg}" class="ex-anim-fallback" loading="lazy">`:`<div style="font-size:60px">${ex.emoji}</div>`}
+        ${img0?`<img id="ex-hero-img-${id}" src="${img0}" class="ex-anim-fallback">`:`<div style="font-size:60px;position:relative;z-index:1">${ex.emoji}</div>`}
       </div>
       <div class="ex-anim-overlay">
         <div style="font-size:22px;font-weight:800;line-height:1.2">${ex.name}</div>
@@ -651,23 +651,26 @@ Views.exerciseDetail=function(id){
     </div>
     <div class="muscle-pills" style="padding:8px 16px 4px">${(ex.muscles||[]).map(m=>`<span class="mpill">${m}</span>`).join('')}</div>
     ${pr?`<div class="pr-banner">🥇 Récord Personal: <strong>${pr.weight}${s.unit} × ${pr.reps} reps</strong></div>`:''}
-    <div class="card video-card">
-      <div class="card-ttl">🎥 Vídeo demostración</div>
-      <div class="video-wrap" id="video-wrap-${id}">
-        <div class="video-thumb${fallbackImg?'':' video-thumb-plain'}" onclick="loadVideo('${id}','${ytEmbed}','${ytUrl}')"${fallbackImg?` style="background-image:url('${fallbackImg}')"`:''}  id="video-thumb-${id}">
-          <div class="video-play"><svg width="36" height="36" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
-          <div class="video-tap-hint">Toca para ver en YouTube</div>
+    <a href="${ytUrl}" target="_blank" class="yt-link-card">
+      <div class="yt-link-left">
+        <div class="yt-link-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="#ff0000"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1C4.5 20.5 12 20.5 12 20.5s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white"/></svg>
+        </div>
+        <div>
+          <div class="yt-link-ttl">Ver demostración</div>
+          <div class="yt-link-sub">${ex.ytSearch}</div>
         </div>
       </div>
-    </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
     ${stepsHTML?`<div class="card"><div class="card-ttl">✅ Cómo hacerlo</div>${stepsHTML}</div>`:''}
     <div class="card"><div class="card-ttl">📖 Descripción</div><p style="font-size:14px;color:var(--t2);line-height:1.6">${ex.desc||''}</p></div>
     <div class="card"><div class="card-ttl">📊 Historial reciente</div>${histHTML}</div>
     <div style="padding:0 16px 8px;display:flex;gap:10px">
-      <a href="${ytUrl}" target="_blank" class="btn btn-outline" style="flex:1;text-align:center;text-decoration:none">🔍 YouTube</a>
+      <a href="${ytUrl}" target="_blank" class="btn btn-outline" style="flex:1;text-align:center;text-decoration:none">▶ YouTube</a>
       <button class="btn btn-primary" style="flex:1" onclick="addToActive('${id}')">＋ Añadir</button>
     </div>`;
-  loadWgerDetail(id);
+  if(img0&&img1)loadWgerDetail(id);
 };
 
 // ── VIEW: PROGRAMS ────────────────────────────────────────────────────────────
