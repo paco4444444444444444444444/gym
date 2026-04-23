@@ -538,16 +538,17 @@ Views.exerciseDetail=function(id){
     return `<div class="hist-row"><span>${daysAgo(w.date)}</span><span style="color:var(--acc2);font-weight:600">${best?`${best.weight}${s.unit} × ${best.reps} reps`:'Sin datos'}</span></div>`;
   }).join('')||'<div style="color:var(--t3);font-size:14px;padding:8px 0">Sin historial todavía</div>';
   const stepsHTML=ex.steps?ex.steps.map((st,i)=>`<div class="step-row"><div class="step-num">${i+1}</div><div class="step-txt">${st}</div></div>`).join(''):'';
-  const ytUrl=`https://www.youtube.com/results?search_query=${encodeURIComponent(ex.ytSearch||ex.name)}`;
+  const ytQuery=encodeURIComponent(ex.ytSearch||ex.name+' tecnica correcta');
+  const ytEmbed=`https://www.youtube-nocookie.com/embed?listType=search&list=${ytQuery}&modestbranding=1&rel=0`;
+  const ytUrl=`https://www.youtube.com/results?search_query=${ytQuery}`;
   const heroImg=EXERCISE_IMGS[id];
   document.getElementById('main').innerHTML=`
     <div class="subpage-header">
       <button class="back-btn" onclick="Router.back()">‹ Atrás</button>
       <div class="subpage-title">${ex.cat}</div>
     </div>
-    ${heroImg?`<div class="ex-detail-img-wrap"><img src="${heroImg}" class="ex-detail-img" onerror="this.parentNode.style.display='none'" loading="lazy"></div>`:''}
     <div class="ex-detail-info-row" style="background:linear-gradient(135deg,${color}22,transparent)">
-      <div style="flex:1;padding:16px 16px 4px">
+      <div style="flex:1;padding:16px 16px 8px">
         <div style="font-size:22px;font-weight:800;line-height:1.2">${ex.name}</div>
         <div style="color:var(--t2);font-size:13px;margin-top:4px">${ex.eq} · ${ex.cat}</div>
         <div class="muscle-pills" style="padding:8px 0 0">${(ex.muscles||[]).map(m=>`<span class="mpill">${m}</span>`).join('')}</div>
@@ -555,11 +556,23 @@ Views.exerciseDetail=function(id){
       <div class="muscle-svg-wrap-sm">${muscleSVG(ex.muscleMap||[])}</div>
     </div>
     ${pr?`<div class="pr-banner">🥇 Récord Personal: <strong>${pr.weight}${s.unit} × ${pr.reps} reps</strong></div>`:''}
-    <div class="card"><div class="card-ttl">📖 Descripción</div><p style="font-size:14px;color:var(--t2);line-height:1.6">${ex.desc||''}</p></div>
+    <div class="card video-card">
+      <div class="card-ttl">🎥 Vídeo demostración</div>
+      <div class="video-wrap" id="video-wrap-${id}">
+        ${heroImg?`<div class="video-thumb" onclick="loadVideo('${id}','${ytEmbed}','${ytUrl}')" style="background-image:url('${heroImg}')">
+          <div class="video-play"><svg width="36" height="36" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+          <div class="video-tap-hint">Toca para ver el vídeo</div>
+        </div>`:`<div class="video-thumb video-thumb-plain" onclick="loadVideo('${id}','${ytEmbed}','${ytUrl}')">
+          <div class="video-play"><svg width="36" height="36" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+          <div class="video-tap-hint">Toca para ver la demostración</div>
+        </div>`}
+      </div>
+    </div>
     ${stepsHTML?`<div class="card"><div class="card-ttl">✅ Cómo hacerlo</div>${stepsHTML}</div>`:''}
+    <div class="card"><div class="card-ttl">📖 Descripción</div><p style="font-size:14px;color:var(--t2);line-height:1.6">${ex.desc||''}</p></div>
     <div class="card"><div class="card-ttl">📊 Historial reciente</div>${histHTML}</div>
     <div style="padding:0 16px 8px;display:flex;gap:10px">
-      <a href="${ytUrl}" target="_blank" class="btn btn-outline" style="flex:1;text-align:center;text-decoration:none">▶ Ver en YouTube</a>
+      <a href="${ytUrl}" target="_blank" class="btn btn-outline" style="flex:1;text-align:center;text-decoration:none">🔍 Buscar en YouTube</a>
       <button class="btn btn-primary" style="flex:1" onclick="addToActive('${id}')">＋ Añadir</button>
     </div>
     <button class="btn btn-secondary btn-block" style="margin:0 16px 24px;width:calc(100%-32px)" onclick="calcORM('${id}')">🧮 Calcular 1RM</button>`;
@@ -811,6 +824,17 @@ function exportData(){
   a.download='gymtracker-backup.json';a.click();
 }
 function clearAll(){if(confirm('¿Borrar TODOS los datos? Esto no se puede deshacer.')){localStorage.clear();toast('Datos borrados');Router.reset('home');}}
+function loadVideo(id,embedUrl,ytUrl){
+  const wrap=document.getElementById('video-wrap-'+id);
+  if(!wrap)return;
+  wrap.innerHTML=`<div class="video-iframe-wrap">
+    <iframe src="${embedUrl}" frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen loading="lazy"
+      onerror="this.parentNode.innerHTML='<a href=\\'${ytUrl}\\' target=\\'_blank\\' class=\\'video-fallback\\'>▶ Ver en YouTube →</a>'">
+    </iframe>
+  </div>`;
+}
 function calcORM(id){
   const pr=Store.getPRs()[id];
   if(!pr){toast('Necesitas un PR registrado primero');return;}
