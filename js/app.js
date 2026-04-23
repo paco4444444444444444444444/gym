@@ -113,15 +113,16 @@ const Modal={
     const cats=['Todos','Pecho','Espalda','Hombros','Brazos','Piernas','Core','Cardio'];
     const chips=cats.map(c=>`<div class="filter-chip${this._filter===c?' active':''}" onclick="Modal.setFilter('${c}')">${c}</div>`).join('');
     const filtered=EXERCISES.filter(e=>(this._filter==='Todos'||e.cat===this._filter)&&(!q||e.name.toLowerCase().includes(q.toLowerCase())||e.muscles.some(m=>m.toLowerCase().includes(q.toLowerCase()))));
-    list.innerHTML=`<div class="filter-scroll" style="padding:0 16px 8px">${chips}</div>`+filtered.map(e=>`
-      <div class="ex-item" onclick="Modal.pick('${e.id}')">
-        <div class="ex-thumb-wrap">${exImg(e.id,'sm')}</div>
-        <div class="ex-info">
-          <div class="ex-name">${e.name}</div>
-          <div class="ex-meta">${e.cat} · ${e.eq} · ${e.muscles[0]}</div>
-        </div>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>`).join('');
+    list.innerHTML=`<div class="filter-scroll" style="padding:0 12px 10px">${chips}</div>
+      <div class="ex-grid" style="padding:0 12px 16px">${filtered.map(e=>{
+        const url=EXERCISE_IMGS[e.id];
+        return `<div class="ex-card" onclick="Modal.pick('${e.id}')">
+          <div class="ex-card-img">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catColor(e.cat)}22">${e.emoji}</div>`}</div>
+          <div class="ex-card-body">
+            <div class="ex-card-name">${e.name}</div>
+            <div class="ex-card-cat">${e.muscles[0]}</div>
+          </div>
+        </div>`;}).join('')}</div>`;
   }
 };
 
@@ -344,16 +345,13 @@ function muscleSVG(active=[]){
 const Views={
   home(){
     const workouts=Store.getWorkouts(),active=Store.getActive(),s=Store.getSettings();
-    const streak=calcStreak(workouts),prs=Object.keys(Store.getPRs()).length;
-    const totalKg=workouts.reduce((a,w)=>a+w.exercises.reduce((b,ex)=>b+ex.sets.reduce((c,s)=>c+(s.completed?(+s.weight||0)*(+s.reps||0):0),0),0),0);
-    const prog=Store.getProgram();
-    const progBanner=prog?`<div class="prog-active-banner" onclick="Router.go('programs')">
-      <div>🎯 <strong>${PROGRAMS.find(p=>p.id===prog.id)?.name||'Programa'}</strong> activo</div>
-      <div style="font-size:12px;color:var(--accent2)">Ver programa ›</div>
-    </div>`:'';
+    const streak=calcStreak(workouts);
+    const weekWorkouts=workouts.filter(w=>(Date.now()-new Date(w.date))<7*86400000);
+    const weekVol=weekWorkouts.reduce((a,w)=>a+w.exercises.reduce((b,ex)=>b+ex.sets.reduce((c,s)=>c+(s.completed?(+s.weight||0)*(+s.reps||0):0),0),0),0);
+    const weekTime=weekWorkouts.reduce((a,w)=>a+(w.duration||0),0);
     const recent=workouts.slice(0,5).map(w=>`
       <div class="history-card" onclick="Views.workoutDetail('${w.id}')">
-        <div class="hc-icon" style="background:${catColor('Pecho')}22">🏋️</div>
+        <div class="hc-icon">🏋️</div>
         <div class="hc-info">
           <div class="hc-name">${w.name}</div>
           <div class="hc-meta">${w.exercises.map(e=>e.name).slice(0,2).join(', ')}${w.exercises.length>2?` +${w.exercises.length-2} más`:''}</div>
@@ -362,34 +360,48 @@ const Views={
           <div class="hc-date">${daysAgo(w.date)}</div>
           <div class="hc-vol">${totalVol(w.exercises,s.unit)}</div>
         </div>
-      </div>`).join('')||`<div class="empty-state"><div class="es-icon">🏋️</div><h3>Sin historial aún</h3><p>Completa tu primer entrenamiento</p></div>`;
+      </div>`).join('');
+    const hasWorkouts=workouts.length>0;
     document.getElementById('main').innerHTML=`
-      <div class="home-header">
-        <div>
-          <div class="home-greeting">Buenas, ${s.name} 👋</div>
-          <div class="home-date">${new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</div>
-        </div>
+      <div class="home-hdr">
+        <div class="home-hdr-title">Inicio</div>
         <div class="streak-badge">🔥 ${streak}</div>
       </div>
       ${active?`<div class="active-banner" onclick="Router.go('active')">
         <div class="ab-dot"></div>
-        <div class="ab-info"><div class="ab-name">${active.name}</div><div class="ab-sub">Entrenamiento en curso</div></div>
-        <div class="ab-btn">Continuar ›</div>
+        <div class="ab-info"><div class="ab-name">${active.name}</div><div class="ab-sub">Entrenamiento en curso · Toca para continuar</div></div>
+        <div class="ab-btn">›</div>
       </div>`:''}
-      ${progBanner}
-      <div class="stats-grid">
-        <div class="stat-box"><div class="stat-val">${workouts.length}</div><div class="stat-lbl">Entrenos</div></div>
-        <div class="stat-box"><div class="stat-val">${totalKg>=1000?(totalKg/1000).toFixed(1)+'t':totalKg+'kg'}</div><div class="stat-lbl">Volumen</div></div>
-        <div class="stat-box"><div class="stat-val">${prs}</div><div class="stat-lbl">PRs</div></div>
+      <div class="home-weekly">
+        <div class="home-weekly-hdr"><span class="home-weekly-ttl">Tu resumen semanal</span><span class="home-weekly-link" onclick="Router.go('progress')">Ver más</span></div>
+        <div class="home-stats-row">
+          <div class="home-stat"><div class="home-stat-val">${weekWorkouts.length}</div><div class="home-stat-lbl">Entrenamientos</div><div class="home-stat-badge">▲ ${weekWorkouts.length}</div></div>
+          <div class="home-stat"><div class="home-stat-val">${Math.floor(weekTime/3600)}h${Math.floor((weekTime%3600)/60)>0?Math.floor((weekTime%3600)/60)+'m':''}</div><div class="home-stat-lbl">Duración</div><div class="home-stat-badge">▲ ${Math.floor(weekTime/3600)}h</div></div>
+          <div class="home-stat"><div class="home-stat-val">${weekVol>=1000?(weekVol/1000).toFixed(1)+'t':weekVol+'kg'}</div><div class="home-stat-lbl">Volumen</div><div class="home-stat-badge home-stat-badge-grn">▲ ${weekVol>=1000?(weekVol/1000).toFixed(1)+'t':weekVol+'kg'}</div></div>
+        </div>
       </div>
-      <div class="start-btn-wrap">
-        <button class="btn-start" onclick="startEmpty()">
-          <div class="start-btn-icon">＋</div>
-          <div><div style="font-size:17px;font-weight:700">Iniciar Entrenamiento</div><div style="font-size:13px;opacity:.7;margin-top:2px">Vacío o desde programa</div></div>
-        </button>
-      </div>
-      <div class="section-row"><div class="section-ttl">Historial reciente</div><div class="section-link" onclick="Router.go('history')">Ver todo ›</div></div>
-      ${recent}`;
+      <div class="home-divider"></div>
+      ${!hasWorkouts?`
+      <div class="home-cta">
+        <div class="home-cta-ttl">¿Listo para entrenar?</div>
+        <div class="home-cta-sub">Empieza tu entrenamiento y añade tus ejercicios favoritos. Tus estadísticas estarán listas al terminar.</div>
+        <button class="btn-start-white" onclick="startEmpty()">Empezar mi primer entrenamiento</button>
+      </div>`:`
+      <div class="home-cta-compact">
+        <button class="btn-start-white" onclick="startEmpty()">▶ Nuevo entrenamiento</button>
+      </div>`}
+      <div class="home-divider"></div>
+      ${hasWorkouts?`<div class="section-row"><div class="section-ttl">Historial reciente</div><div class="section-link" onclick="Router.go('history')">Ver todo ›</div></div>${recent}`:''}
+      <div style="padding:0 16px 12px">
+        <div class="section-ttl" style="margin-bottom:10px">Programas populares</div>
+        <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
+          ${PROGRAMS.slice(0,3).map(p=>`<div class="prog-mini-card" style="background:linear-gradient(135deg,${p.color}88,${p.color}33)" onclick="Router.go('programs')">
+            <div style="font-size:28px">${p.emoji}</div>
+            <div style="font-size:12px;font-weight:700;margin-top:4px;line-height:1.2">${p.name}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.7);margin-top:2px">${p.daysPerWeek}d/sem · ${p.level}</div>
+          </div>`).join('')}
+        </div>
+      </div>`;
   },
 
   workoutDetail(id){
@@ -495,27 +507,23 @@ Views.exercises=function(filter){
   const cats=['Todos','Pecho','Espalda','Hombros','Brazos','Piernas','Core','Cardio'];
   const chips=cats.map(c=>`<button class="fchip${filter===c?' active':''}" onclick="Views.exercises('${c}')">${c}</button>`).join('');
   const s=Store.getSettings();
-  const list=EXERCISES.filter(e=>filter==='Todos'||e.cat===filter).map(e=>{
+  const exs=EXERCISES.filter(e=>filter==='Todos'||e.cat===filter);
+  const grid=exs.map(e=>{
     const pr=Store.getPRs()[e.id];
-    return `<div class="ex-row" onclick="Views.exerciseDetail('${e.id}')">
-      <div class="ex-row-img">${exImg(e.id,'sm')}</div>
-      <div class="ex-row-info">
-        <div class="ex-row-name">${e.name}</div>
-        <div class="ex-row-meta">${e.eq} · ${e.muscles[0]}</div>
-        ${pr?`<div class="ex-row-pr">🏆 ${pr.weight}${s.unit} × ${pr.reps} reps</div>`:''}
+    const url=EXERCISE_IMGS[e.id];
+    return `<div class="ex-card" onclick="Views.exerciseDetail('${e.id}')">
+      <div class="ex-card-img">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catColor(e.cat)}22">${e.emoji}</div>`}</div>
+      <div class="ex-card-body">
+        <div class="ex-card-name">${e.name}</div>
+        <div class="ex-card-cat">${e.muscles[0]}</div>
+        ${pr?`<div class="ex-card-pr">🏆 ${pr.weight}${s.unit}×${pr.reps}</div>`:''}
       </div>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;}).join('');
   document.getElementById('main').innerHTML=`
-    <div class="page-hdr"><div class="page-ttl">Ejercicios</div><div style="color:var(--text3);font-size:13px">${EXERCISES.filter(e=>filter==='Todos'||e.cat===filter).length} ejercicios</div></div>
-    <div class="search-wrap" style="padding:0 16px 10px">
-      <div class="search-box">
-        <span class="search-ico">🔍</span>
-        <input class="search-inp" placeholder="Buscar ejercicio…" oninput="searchEx(this.value,'${filter}')">
-      </div>
-    </div>
+    <div class="page-hdr"><div class="page-ttl">Ejercicios</div><div style="color:var(--t3);font-size:13px">${exs.length} ejercicios</div></div>
+    <div style="padding:0 16px 10px"><div class="search-box"><span class="search-ico">🔍</span><input class="search-inp" placeholder="Buscar ejercicio…" oninput="searchEx(this.value,'${filter}')"></div></div>
     <div class="fchips">${chips}</div>
-    <div id="ex-list">${list}</div>`;
+    <div class="ex-grid" id="ex-list">${grid}</div>`;
 };
 
 Views.exerciseDetail=function(id){
@@ -749,16 +757,17 @@ function searchEx(q,filter){
   const list=document.getElementById('ex-list');if(!list)return;
   const s=Store.getSettings();
   const filtered=EXERCISES.filter(e=>(filter==='Todos'||e.cat===filter)&&(!q||e.name.toLowerCase().includes(q.toLowerCase())||e.muscles.some(m=>m.toLowerCase().includes(q.toLowerCase()))));
+  list.className='ex-grid';
   list.innerHTML=filtered.map(e=>{
     const pr=Store.getPRs()[e.id];
-    return `<div class="ex-row" onclick="Views.exerciseDetail('${e.id}')">
-      <div class="ex-row-img">${exImg(e.id,'sm')}</div>
-      <div class="ex-row-info">
-        <div class="ex-row-name">${e.name}</div>
-        <div class="ex-row-meta">${e.eq} · ${e.muscles[0]}</div>
-        ${pr?`<div class="ex-row-pr">🏆 ${pr.weight}${s.unit} × ${pr.reps} reps</div>`:''}
+    const url=EXERCISE_IMGS[e.id];
+    return `<div class="ex-card" onclick="Views.exerciseDetail('${e.id}')">
+      <div class="ex-card-img">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catColor(e.cat)}22">${e.emoji}</div>`}</div>
+      <div class="ex-card-body">
+        <div class="ex-card-name">${e.name}</div>
+        <div class="ex-card-cat">${e.muscles[0]}</div>
+        ${pr?`<div class="ex-card-pr">🏆 ${pr.weight}${s.unit}×${pr.reps}</div>`:''}
       </div>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;}).join('');
 }
 function addToActive(id){
