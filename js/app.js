@@ -115,7 +115,7 @@ const Modal={
     const filtered=EXERCISES.filter(e=>(this._filter==='Todos'||e.cat===this._filter)&&(!q||e.name.toLowerCase().includes(q.toLowerCase())||e.muscles.some(m=>m.toLowerCase().includes(q.toLowerCase()))));
     list.innerHTML=`<div class="filter-scroll" style="padding:0 16px 8px">${chips}</div>`+filtered.map(e=>`
       <div class="ex-item" onclick="Modal.pick('${e.id}')">
-        <div class="ex-avatar" style="background:${catColor(e.cat)}22;font-size:24px">${e.emoji}</div>
+        <div class="ex-thumb-wrap">${exImg(e.id,'sm')}</div>
         <div class="ex-info">
           <div class="ex-name">${e.name}</div>
           <div class="ex-meta">${e.cat} · ${e.eq} · ${e.muscles[0]}</div>
@@ -127,6 +127,64 @@ const Modal={
 
 function catColor(cat){
   return{Pecho:'#ef4444',Espalda:'#3b82f6',Hombros:'#8b5cf6',Brazos:'#f59e0b',Piernas:'#10b981',Core:'#06b6d4',Cardio:'#f97316'}[cat]||'#7c3aed';
+}
+
+const _B='https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
+const EXERCISE_IMGS={
+  'e001':_B+'Barbell_Bench_Press_-_Medium_Grip/0.jpg',
+  'e002':_B+'Barbell_Incline_Bench_Press_-_Medium_Grip/0.jpg',
+  'e003':_B+'Barbell_Decline_Bench_Press/0.jpg',
+  'e004':_B+'Dumbbell_Bench_Press/0.jpg',
+  'e005':_B+'Dumbbell_Incline_Bench_Press/0.jpg',
+  'e006':_B+'Dumbbell_Flyes/0.jpg',
+  'e007':_B+'Cable_Crossovers/0.jpg',
+  'e008':_B+'Pushups/0.jpg',
+  'e009':_B+'Chest_Dip/0.jpg',
+  'e012':_B+'Barbell_Deadlift/0.jpg',
+  'e013':_B+'Bent_Over_Barbell_Row/0.jpg',
+  'e015':_B+'Pullups/0.jpg',
+  'e016':_B+'Chin-Ups/0.jpg',
+  'e017':_B+'Wide-Grip_Lat_Pulldown/0.jpg',
+  'e018':_B+'Seated_Cable_Rows/0.jpg',
+  'e019':_B+'Dumbbell_One-Arm_Row/0.jpg',
+  'e021':_B+'Romanian_Deadlift/0.jpg',
+  'e022':_B+'Hyperextensions_(Back_Extensions)/0.jpg',
+  'e024':_B+'Barbell_Shoulder_Press/0.jpg',
+  'e025':_B+'Dumbbell_Shoulder_Press/0.jpg',
+  'e026':_B+'Arnold_Dumbbell_Press/0.jpg',
+  'e027':_B+'Dumbbell_Lateral_Raise/0.jpg',
+  'e028':_B+'Dumbbell_Front_Raise/0.jpg',
+  'e031':_B+'Barbell_Upright_Row/0.jpg',
+  'e033':_B+'Barbell_Shrug/0.jpg',
+  'e034':_B+'Barbell_Curl/0.jpg',
+  'e035':_B+'EZ-Bar_Curl/0.jpg',
+  'e036':_B+'Dumbbell_Alternate_Bicep_Curl/0.jpg',
+  'e037':_B+'Hammer_Curls/0.jpg',
+  'e039':_B+'Concentration_Curls/0.jpg',
+  'e042':_B+'Barbell_Close-Grip_Bench_Press/0.jpg',
+  'e045':_B+'Lying_Triceps_Press/0.jpg',
+  'e050':_B+'Barbell_Squat/0.jpg',
+  'e051':_B+'Barbell_Front_Squat/0.jpg',
+  'e052':_B+'Leg_Press/0.jpg',
+  'e053':_B+'Hack_Squat/0.jpg',
+  'e054':_B+'Dumbbell_Bulgarian_Split_Squat/0.jpg',
+  'e055':_B+'Dumbbell_Lunges/0.jpg',
+  'e056':_B+'Leg_Extensions/0.jpg',
+  'e057':_B+'Lying_Leg_Curls/0.jpg',
+  'e058':_B+'Standing_Calf_Raises/0.jpg',
+  'e060':_B+'Barbell_Hip_Thrust/0.jpg',
+  'e065':_B+'Sumo_Deadlift/0.jpg',
+  'e066':_B+'Crunch/0.jpg',
+  'e067':_B+'Plank/0.jpg',
+  'e069':_B+'Flat_Bench_Lying_Leg_Raise/0.jpg',
+  'e077':_B+'Hanging_Leg_Raise/0.jpg',
+};
+function exImg(id,size){
+  const url=EXERCISE_IMGS[id];
+  const ex=getEx(id);
+  const fallback=`<div class="ex-emoji-fb" style="background:${catColor(ex?.cat)}22;font-size:${size==='lg'?'52px':'24px'}">${ex?.emoji||'💪'}</div>`;
+  if(!url)return fallback;
+  return `<img class="ex-thumb${size==='lg'?' ex-thumb-lg':''}" src="${url}" onerror="this.outerHTML='${fallback.replace(/'/g,'&#39;')}'" loading="lazy">`;
 }
 
 // ── WORKOUT LOGIC ─────────────────────────────────────────────────────────────
@@ -440,11 +498,11 @@ Views.exercises=function(filter){
   const list=EXERCISES.filter(e=>filter==='Todos'||e.cat===filter).map(e=>{
     const pr=Store.getPRs()[e.id];
     return `<div class="ex-row" onclick="Views.exerciseDetail('${e.id}')">
-      <div class="ex-row-icon" style="background:${catColor(e.cat)}22">${e.emoji}</div>
+      <div class="ex-row-img">${exImg(e.id,'sm')}</div>
       <div class="ex-row-info">
         <div class="ex-row-name">${e.name}</div>
         <div class="ex-row-meta">${e.eq} · ${e.muscles[0]}</div>
-        ${pr?`<div class="ex-row-pr">PR: ${pr.weight}${s.unit} × ${pr.reps} reps</div>`:''}
+        ${pr?`<div class="ex-row-pr">🏆 ${pr.weight}${s.unit} × ${pr.reps} reps</div>`:''}
       </div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;}).join('');
@@ -469,26 +527,27 @@ Views.exerciseDetail=function(id){
   const histHTML=history.map(w=>{
     const exd=w.exercises.find(e=>e.exerciseId===id);
     const best=exd.sets.filter(s=>s.completed&&s.weight).reduce((b,s)=>(!b||+s.weight>+b.weight)?s:b,null);
-    return `<div class="hist-row"><span>${daysAgo(w.date)}</span><span style="color:var(--accent2);font-weight:600">${best?`${best.weight}${s.unit} × ${best.reps} reps`:'Sin datos'}</span></div>`;
-  }).join('')||'<div style="color:var(--text3);font-size:14px;padding:8px 0">Sin historial todavía</div>';
+    return `<div class="hist-row"><span>${daysAgo(w.date)}</span><span style="color:var(--acc2);font-weight:600">${best?`${best.weight}${s.unit} × ${best.reps} reps`:'Sin datos'}</span></div>`;
+  }).join('')||'<div style="color:var(--t3);font-size:14px;padding:8px 0">Sin historial todavía</div>';
   const stepsHTML=ex.steps?ex.steps.map((st,i)=>`<div class="step-row"><div class="step-num">${i+1}</div><div class="step-txt">${st}</div></div>`).join(''):'';
   const ytUrl=`https://www.youtube.com/results?search_query=${encodeURIComponent(ex.ytSearch||ex.name)}`;
+  const heroImg=EXERCISE_IMGS[id];
   document.getElementById('main').innerHTML=`
     <div class="subpage-header">
       <button class="back-btn" onclick="Router.back()">‹ Atrás</button>
       <div class="subpage-title">${ex.cat}</div>
     </div>
-    <div class="ex-hero" style="background:linear-gradient(135deg,${color}33,${color}11)">
-      <div class="ex-hero-emoji">${ex.emoji}</div>
-      <div class="muscle-svg-wrap">${muscleSVG(ex.muscleMap||[])}</div>
+    ${heroImg?`<div class="ex-detail-img-wrap"><img src="${heroImg}" class="ex-detail-img" onerror="this.parentNode.style.display='none'" loading="lazy"></div>`:''}
+    <div class="ex-detail-info-row" style="background:linear-gradient(135deg,${color}22,transparent)">
+      <div style="flex:1;padding:16px 16px 4px">
+        <div style="font-size:22px;font-weight:800;line-height:1.2">${ex.name}</div>
+        <div style="color:var(--t2);font-size:13px;margin-top:4px">${ex.eq} · ${ex.cat}</div>
+        <div class="muscle-pills" style="padding:8px 0 0">${(ex.muscles||[]).map(m=>`<span class="mpill">${m}</span>`).join('')}</div>
+      </div>
+      <div class="muscle-svg-wrap-sm">${muscleSVG(ex.muscleMap||[])}</div>
     </div>
-    <div style="padding:16px 16px 4px">
-      <div style="font-size:24px;font-weight:800">${ex.name}</div>
-      <div style="color:var(--text2);font-size:13px;margin-top:4px">${ex.eq} · ${ex.cat}</div>
-    </div>
-    <div class="muscle-pills">${(ex.muscles||[]).map(m=>`<span class="mpill">${m}</span>`).join('')}</div>
     ${pr?`<div class="pr-banner">🥇 Récord Personal: <strong>${pr.weight}${s.unit} × ${pr.reps} reps</strong></div>`:''}
-    <div class="card"><div class="card-ttl">📖 Descripción</div><p style="font-size:14px;color:var(--text2);line-height:1.6">${ex.desc||''}</p></div>
+    <div class="card"><div class="card-ttl">📖 Descripción</div><p style="font-size:14px;color:var(--t2);line-height:1.6">${ex.desc||''}</p></div>
     ${stepsHTML?`<div class="card"><div class="card-ttl">✅ Cómo hacerlo</div>${stepsHTML}</div>`:''}
     <div class="card"><div class="card-ttl">📊 Historial reciente</div>${histHTML}</div>
     <div style="padding:0 16px 8px;display:flex;gap:10px">
@@ -693,11 +752,11 @@ function searchEx(q,filter){
   list.innerHTML=filtered.map(e=>{
     const pr=Store.getPRs()[e.id];
     return `<div class="ex-row" onclick="Views.exerciseDetail('${e.id}')">
-      <div class="ex-row-icon" style="background:${catColor(e.cat)}22">${e.emoji}</div>
+      <div class="ex-row-img">${exImg(e.id,'sm')}</div>
       <div class="ex-row-info">
         <div class="ex-row-name">${e.name}</div>
         <div class="ex-row-meta">${e.eq} · ${e.muscles[0]}</div>
-        ${pr?`<div class="ex-row-pr">PR: ${pr.weight}${s.unit} × ${pr.reps} reps</div>`:''}
+        ${pr?`<div class="ex-row-pr">🏆 ${pr.weight}${s.unit} × ${pr.reps} reps</div>`:''}
       </div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;}).join('');

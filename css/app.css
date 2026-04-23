@@ -181,3 +181,35 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font
 /* INPUTS: hide spinners */
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;}
 input[type=number]{-moz-appearance:textfield;}
+
+/* EXERCISE IMAGES */
+.ex-row-img{width:62px;height:62px;border-radius:12px;overflow:hidden;flex-shrink:0;background:var(--s2);display:flex;align-items:center;justify-content:center;}
+.ex-thumb{width:100%;height:100%;object-fit:cover;display:block;}
+.ex-thumb-lg{width:100%;height:100%;object-fit:cover;display:block;}
+.ex-emoji-fb{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+
+/* EXERCISE LIST ROW */
+.ex-row{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--bdr);cursor:pointer;transition:background .1s;}
+.ex-row:active{background:var(--s1);}
+
+/* MODAL ITEMS */
+.ex-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bdr);cursor:pointer;transition:background .1s;}
+.ex-item:active{background:var(--s2);}
+.ex-thumb-wrap{width:56px;height:56px;border-radius:10px;overflow:hidden;flex-shrink:0;background:var(--s2);display:flex;align-items:center;justify-content:center;}
+.ex-avatar{width:56px;height:56px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.ex-info{flex:1;min-width:0;}
+.ex-name{font-size:15px;font-weight:600;}
+.ex-meta{font-size:12px;color:var(--t2);margin-top:2px;}
+.filter-chip{flex-shrink:0;padding:6px 14px;border-radius:20px;background:var(--s2);border:1px solid var(--bdr);color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;}
+.filter-chip.active{background:var(--acc);border-color:var(--acc);color:#fff;}
+.filter-scroll{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;}
+.filter-scroll::-webkit-scrollbar{display:none;}
+
+/* EXERCISE DETAIL IMAGE */
+.ex-detail-img-wrap{width:100%;height:240px;overflow:hidden;position:relative;background:var(--s2);}
+.ex-detail-img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;}
+.ex-detail-info-row{display:flex;align-items:flex-start;gap:4px;}
+.muscle-svg-wrap-sm{width:100px;flex-shrink:0;padding:12px 8px 0 0;}
+
+/* EXERCISE ROW (override duplicate rule) */
+.ex-row-icon{width:62px;height:62px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;background:var(--s2);}
