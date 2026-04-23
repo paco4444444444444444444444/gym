@@ -117,12 +117,13 @@ const Modal={
       <div class="ex-grid" style="padding:0 12px 16px">${filtered.map(e=>{
         const url=EXERCISE_IMGS[e.id];
         return `<div class="ex-card" onclick="Modal.pick('${e.id}')">
-          <div class="ex-card-img">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catColor(e.cat)}22">${e.emoji}</div>`}</div>
+          <div class="ex-card-img" data-wgerid="${e.id}">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catColor(e.cat)}22">${e.emoji}</div>`}</div>
           <div class="ex-card-body">
             <div class="ex-card-name">${e.name}</div>
             <div class="ex-card-cat">${e.muscles[0]}</div>
           </div>
         </div>`;}).join('')}</div>`;
+    setTimeout(()=>applyWgerImages(list),100);
   }
 };
 
@@ -186,6 +187,77 @@ function exImg(id,size){
   const fallback=`<div class="ex-emoji-fb" style="background:${catColor(ex?.cat)}22;font-size:${size==='lg'?'52px':'24px'}">${ex?.emoji||'💪'}</div>`;
   if(!url)return fallback;
   return `<img class="ex-thumb${size==='lg'?' ex-thumb-lg':''}" src="${url}" onerror="this.outerHTML='${fallback.replace(/'/g,'&#39;')}'" loading="lazy">`;
+}
+
+// ── WGER IMAGE INTEGRATION (3D muscle figures, same source as Lyfta) ──────────
+const WGER_NAMES={
+  e001:'Bench Press',e002:'Incline Bench Press',e003:'Decline Bench Press',
+  e004:'Dumbbell Bench Press',e005:'Dumbbell Incline Bench Press',
+  e006:'Dumbbell Flyes',e007:'Cable Crossovers',e008:'Push-ups',
+  e009:'Chest Dip',e010:'Chest Press',e011:'Pec Deck Fly',
+  e012:'Barbell Deadlift',e013:'Bent Over Row',e014:'T-Bar Row',
+  e015:'Pull-ups',e016:'Chin-ups',e017:'Lat Pulldown',
+  e018:'Seated Cable Row',e019:'Dumbbell One Arm Row',
+  e020:'Face Pull',e021:'Romanian Deadlift',e022:'Hyperextensions',
+  e023:'Good Morning',e024:'Overhead Press',e025:'Dumbbell Shoulder Press',
+  e026:'Arnold Press',e027:'Dumbbell Lateral Raise',e028:'Dumbbell Front Raise',
+  e029:'Dumbbell Rear Delt Raise',e030:'Cable Lateral Raise',
+  e031:'Upright Row',e032:'Shoulder Press Machine',e033:'Barbell Shrug',
+  e034:'Barbell Curl',e035:'EZ Bar Curl',e036:'Dumbbell Curl',
+  e037:'Hammer Curl',e038:'Preacher Curl',e039:'Concentration Curl',
+  e040:'Cable Curl',e041:'Incline Dumbbell Curl',
+  e042:'Close Grip Bench Press',e043:'Tricep Pushdown',
+  e044:'Overhead Tricep Extension',e045:'Skull Crusher',e046:'Tricep Dips',
+  e047:'Diamond Push-ups',e048:'Overhead Cable Tricep Extension',
+  e050:'Barbell Squat',e051:'Front Squat',e052:'Leg Press',
+  e053:'Hack Squat',e054:'Bulgarian Split Squat',
+  e055:'Dumbbell Lunges',e056:'Leg Extension',e057:'Leg Curl',
+  e058:'Standing Calf Raise',e059:'Seated Calf Raise',
+  e060:'Hip Thrust',e061:'Glute Bridge',e062:'Box Jump',
+  e063:'Step Up',e064:'Goblet Squat',e065:'Sumo Deadlift',
+  e066:'Crunch',e067:'Plank',e068:'Russian Twist',
+  e069:'Leg Raise',e070:'Cable Crunch',e071:'Ab Roller',
+  e072:'V-Up',e073:'Bicycle Crunch',e074:'Mountain Climbers',
+  e075:'Side Plank',e077:'Hanging Leg Raise',
+};
+const _wc={};
+async function fetchWgerData(exId){
+  if(_wc[exId]!==undefined)return _wc[exId];
+  const stored=sessionStorage.getItem('wg2_'+exId);
+  if(stored){const p=JSON.parse(stored);_wc[exId]=p;return p;}
+  const name=WGER_NAMES[exId];
+  if(!name){_wc[exId]=null;return null;}
+  try{
+    const r=await fetch(`https://wger.de/api/v2/exercise/search/?term=${encodeURIComponent(name)}&language=2&format=json`);
+    if(!r.ok){_wc[exId]=null;return null;}
+    const d=await r.json();
+    const sug=d.suggestions?.[0];
+    if(!sug){_wc[exId]=null;return null;}
+    const baseId=sug.data?.base_id||sug.data?.id;
+    if(!baseId){_wc[exId]=null;return null;}
+    const r2=await fetch(`https://wger.de/api/v2/exerciseinfo/${baseId}/?format=json`);
+    if(!r2.ok){_wc[exId]=null;return null;}
+    const info=await r2.json();
+    const mainImg=info.images?.find(i=>i.is_main)?.image||info.images?.[0]?.image||null;
+    const gif=info.images?.find(i=>i.image?.endsWith('.gif'))?.image||null;
+    const result={img:mainImg,gif,baseId};
+    _wc[exId]=result;
+    try{sessionStorage.setItem('wg2_'+exId,JSON.stringify(result));}catch(e){}
+    return result;
+  }catch(e){_wc[exId]=null;return null;}
+}
+async function applyWgerImages(scope){
+  const els=(scope||document).querySelectorAll('[data-wgerid]');
+  els.forEach(async el=>{
+    const exId=el.dataset.wgerid;
+    const data=await fetchWgerData(exId);
+    if(!data?.img)return;
+    const img=el.querySelector('img.wger-img')||el.querySelector('img');
+    if(img){img.src=data.img;img.classList.add('wger-loaded');}
+    else{
+      el.innerHTML=`<img src="${data.img}" class="wger-img wger-loaded" loading="lazy" onerror="this.style.display='none'">`;
+    }
+  });
 }
 
 // ── WORKOUT LOGIC ─────────────────────────────────────────────────────────────
@@ -512,7 +584,7 @@ Views.exercises=function(filter){
     const pr=Store.getPRs()[e.id];
     const url=EXERCISE_IMGS[e.id];
     return `<div class="ex-card" onclick="Views.exerciseDetail('${e.id}')">
-      <div class="ex-card-img">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catColor(e.cat)}22">${e.emoji}</div>`}</div>
+      <div class="ex-card-img" data-wgerid="${e.id}">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catColor(e.cat)}22">${e.emoji}</div>`}</div>
       <div class="ex-card-body">
         <div class="ex-card-name">${e.name}</div>
         <div class="ex-card-cat">${e.muscles[0]}</div>
@@ -524,6 +596,7 @@ Views.exercises=function(filter){
     <div style="padding:0 16px 10px"><div class="search-box"><span class="search-ico">🔍</span><input class="search-inp" placeholder="Buscar ejercicio…" oninput="searchEx(this.value,'${filter}')"></div></div>
     <div class="fchips">${chips}</div>
     <div class="ex-grid" id="ex-list">${grid}</div>`;
+  setTimeout(()=>applyWgerImages(),50);
 };
 
 Views.exerciseDetail=function(id){
@@ -541,41 +614,41 @@ Views.exerciseDetail=function(id){
   const ytQuery=encodeURIComponent(ex.ytSearch||ex.name+' tecnica correcta');
   const ytEmbed=`https://www.youtube-nocookie.com/embed?listType=search&list=${ytQuery}&modestbranding=1&rel=0`;
   const ytUrl=`https://www.youtube.com/results?search_query=${ytQuery}`;
-  const heroImg=EXERCISE_IMGS[id];
+  const fallbackImg=EXERCISE_IMGS[id]||'';
   document.getElementById('main').innerHTML=`
     <div class="subpage-header">
       <button class="back-btn" onclick="Router.back()">‹ Atrás</button>
       <div class="subpage-title">${ex.cat}</div>
     </div>
-    <div class="ex-detail-info-row" style="background:linear-gradient(135deg,${color}22,transparent)">
-      <div style="flex:1;padding:16px 16px 8px">
-        <div style="font-size:22px;font-weight:800;line-height:1.2">${ex.name}</div>
-        <div style="color:var(--t2);font-size:13px;margin-top:4px">${ex.eq} · ${ex.cat}</div>
-        <div class="muscle-pills" style="padding:8px 0 0">${(ex.muscles||[]).map(m=>`<span class="mpill">${m}</span>`).join('')}</div>
+    <div class="ex-anim-hero" id="ex-anim-${id}">
+      <div class="ex-anim-loading">
+        ${fallbackImg?`<img src="${fallbackImg}" class="ex-anim-fallback" loading="lazy">`:`<div style="font-size:60px">${ex.emoji}</div>`}
       </div>
-      <div class="muscle-svg-wrap-sm">${muscleSVG(ex.muscleMap||[])}</div>
+      <div class="ex-anim-overlay">
+        <div style="font-size:22px;font-weight:800;line-height:1.2">${ex.name}</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.7);margin-top:4px">${ex.eq} · ${ex.cat}</div>
+      </div>
+      <div class="muscle-svg-hero">${muscleSVG(ex.muscleMap||[])}</div>
     </div>
+    <div class="muscle-pills" style="padding:8px 16px 4px">${(ex.muscles||[]).map(m=>`<span class="mpill">${m}</span>`).join('')}</div>
     ${pr?`<div class="pr-banner">🥇 Récord Personal: <strong>${pr.weight}${s.unit} × ${pr.reps} reps</strong></div>`:''}
     <div class="card video-card">
       <div class="card-ttl">🎥 Vídeo demostración</div>
       <div class="video-wrap" id="video-wrap-${id}">
-        ${heroImg?`<div class="video-thumb" onclick="loadVideo('${id}','${ytEmbed}','${ytUrl}')" style="background-image:url('${heroImg}')">
+        <div class="video-thumb${fallbackImg?'':' video-thumb-plain'}" onclick="loadVideo('${id}','${ytEmbed}','${ytUrl}')"${fallbackImg?` style="background-image:url('${fallbackImg}')"`:''}  id="video-thumb-${id}">
           <div class="video-play"><svg width="36" height="36" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
-          <div class="video-tap-hint">Toca para ver el vídeo</div>
-        </div>`:`<div class="video-thumb video-thumb-plain" onclick="loadVideo('${id}','${ytEmbed}','${ytUrl}')">
-          <div class="video-play"><svg width="36" height="36" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
-          <div class="video-tap-hint">Toca para ver la demostración</div>
-        </div>`}
+          <div class="video-tap-hint">Toca para ver en YouTube</div>
+        </div>
       </div>
     </div>
     ${stepsHTML?`<div class="card"><div class="card-ttl">✅ Cómo hacerlo</div>${stepsHTML}</div>`:''}
     <div class="card"><div class="card-ttl">📖 Descripción</div><p style="font-size:14px;color:var(--t2);line-height:1.6">${ex.desc||''}</p></div>
     <div class="card"><div class="card-ttl">📊 Historial reciente</div>${histHTML}</div>
     <div style="padding:0 16px 8px;display:flex;gap:10px">
-      <a href="${ytUrl}" target="_blank" class="btn btn-outline" style="flex:1;text-align:center;text-decoration:none">🔍 Buscar en YouTube</a>
+      <a href="${ytUrl}" target="_blank" class="btn btn-outline" style="flex:1;text-align:center;text-decoration:none">🔍 YouTube</a>
       <button class="btn btn-primary" style="flex:1" onclick="addToActive('${id}')">＋ Añadir</button>
-    </div>
-    <button class="btn btn-secondary btn-block" style="margin:0 16px 24px;width:calc(100%-32px)" onclick="calcORM('${id}')">🧮 Calcular 1RM</button>`;
+    </div>`;
+  loadWgerDetail(id);
 };
 
 // ── VIEW: PROGRAMS ────────────────────────────────────────────────────────────
@@ -824,6 +897,28 @@ function exportData(){
   a.download='gymtracker-backup.json';a.click();
 }
 function clearAll(){if(confirm('¿Borrar TODOS los datos? Esto no se puede deshacer.')){localStorage.clear();toast('Datos borrados');Router.reset('home');}}
+async function loadWgerDetail(exId){
+  const data=await fetchWgerData(exId);
+  if(!data)return;
+  const hero=document.getElementById('ex-anim-'+exId);
+  if(data.gif&&hero){
+    const loading=hero.querySelector('.ex-anim-loading');
+    if(loading){
+      loading.innerHTML=`<img src="${data.gif}" class="ex-anim-gif" alt="animación ejercicio">`;
+    }
+  } else if(data.img&&hero){
+    const loading=hero.querySelector('.ex-anim-loading');
+    if(loading){
+      const fb=loading.querySelector('img');
+      if(fb)fb.src=data.img;
+      else loading.innerHTML=`<img src="${data.img}" class="ex-anim-fallback">`;
+    }
+  }
+  const thumb=document.getElementById('video-thumb-'+exId);
+  if(thumb&&data.img){
+    thumb.style.backgroundImage=`url('${data.img}')`;
+  }
+}
 function loadVideo(id,embedUrl,ytUrl){
   const wrap=document.getElementById('video-wrap-'+id);
   if(!wrap)return;

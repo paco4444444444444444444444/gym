@@ -266,5 +266,15 @@ input[type=number]{-moz-appearance:textfield;}
 .ex-detail-info-row{display:flex;align-items:flex-start;gap:4px;}
 .muscle-svg-wrap-sm{width:100px;flex-shrink:0;padding:12px 8px 0 0;}
 
+/* EXERCISE ANIMATED HERO (wger 3D figures) */
+.ex-anim-hero{position:relative;width:100%;min-height:260px;background:#111;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.ex-anim-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.ex-anim-fallback{width:100%;height:100%;object-fit:cover;object-position:center top;opacity:.7;}
+.ex-anim-gif{width:100%;height:100%;object-fit:contain;background:#111;}
+.ex-anim-overlay{position:absolute;bottom:0;left:0;right:0;padding:16px;background:linear-gradient(transparent,rgba(0,0,0,.85));z-index:2;}
+.muscle-svg-hero{position:absolute;right:8px;top:8px;width:80px;opacity:.9;z-index:2;}
+.wger-loaded{animation:wgerFade .3s ease;}
+@keyframes wgerFade{from{opacity:0}to{opacity:1}}
+
 /* EXERCISE ROW (override duplicate rule) */
 .ex-row-icon{width:62px;height:62px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;background:var(--s2);}
