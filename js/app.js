@@ -116,7 +116,9 @@ const Modal={
     list.innerHTML=`<div class="filter-scroll" style="padding:0 12px 10px">${chips}</div>
       <div class="ex-grid" style="padding:0 12px 16px">${filtered.map(e=>{
         const url=EXERCISE_IMGS[e.id];
-        return `<div class="ex-card" onclick="Modal.pick('${e.id}')">
+        return `<div class="ex-card" onclick="Modal.pick('${e.id}')"
+            onmouseenter="startExAnim('${e.id}',this.querySelector('.ex-card-img'))"
+            onmouseleave="stopExAnim('${e.id}')">
           <div class="ex-card-img" data-wgerid="${e.id}">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catColor(e.cat)}22">${e.emoji}</div>`}</div>
           <div class="ex-card-body">
             <div class="ex-card-name">${e.name}</div>
@@ -223,26 +225,21 @@ const WGER_NAMES={
 const _wc={};
 async function fetchWgerData(exId){
   if(_wc[exId]!==undefined)return _wc[exId];
-  const stored=sessionStorage.getItem('wg2_'+exId);
+  const stored=sessionStorage.getItem('wg3_'+exId);
   if(stored){const p=JSON.parse(stored);_wc[exId]=p;return p;}
   const name=WGER_NAMES[exId];
   if(!name){_wc[exId]=null;return null;}
   try{
-    const r=await fetch(`https://wger.de/api/v2/exercise/search/?term=${encodeURIComponent(name)}&language=2&format=json`);
+    const r=await fetch(`https://wger.de/api/v2/exercise/search/?term=${encodeURIComponent(name)}&language=2&format=json`,{signal:AbortSignal.timeout(6000)});
     if(!r.ok){_wc[exId]=null;return null;}
     const d=await r.json();
     const sug=d.suggestions?.[0];
-    if(!sug){_wc[exId]=null;return null;}
-    const baseId=sug.data?.base_id||sug.data?.id;
-    if(!baseId){_wc[exId]=null;return null;}
-    const r2=await fetch(`https://wger.de/api/v2/exerciseinfo/${baseId}/?format=json`);
-    if(!r2.ok){_wc[exId]=null;return null;}
-    const info=await r2.json();
-    const mainImg=info.images?.find(i=>i.is_main)?.image||info.images?.[0]?.image||null;
-    const gif=info.images?.find(i=>i.image?.endsWith('.gif'))?.image||null;
-    const result={img:mainImg,gif,baseId};
+    if(!sug?.data){_wc[exId]=null;return null;}
+    let imgUrl=sug.data.image||null;
+    if(imgUrl&&!imgUrl.startsWith('http'))imgUrl='https://wger.de'+imgUrl;
+    const result={img:imgUrl,baseId:sug.data.base_id||sug.data.id};
     _wc[exId]=result;
-    try{sessionStorage.setItem('wg2_'+exId,JSON.stringify(result));}catch(e){}
+    if(imgUrl)try{sessionStorage.setItem('wg3_'+exId,JSON.stringify(result));}catch(e){}
     return result;
   }catch(e){_wc[exId]=null;return null;}
 }
@@ -252,12 +249,29 @@ async function applyWgerImages(scope){
     const exId=el.dataset.wgerid;
     const data=await fetchWgerData(exId);
     if(!data?.img)return;
-    const img=el.querySelector('img.wger-img')||el.querySelector('img');
-    if(img){img.src=data.img;img.classList.add('wger-loaded');}
-    else{
-      el.innerHTML=`<img src="${data.img}" class="wger-img wger-loaded" loading="lazy" onerror="this.style.display='none'">`;
-    }
+    const existing=el.querySelector('img');
+    if(existing){existing.src=data.img;existing.classList.add('wger-loaded');}
+    else el.innerHTML=`<img src="${data.img}" class="wger-img wger-loaded" loading="lazy" onerror="this.style.display='none'">`;
   });
+}
+
+// ── 2-FRAME ANIMATION (0.jpg ↔ 1.jpg from free-exercise-db) ──────────────────
+const _animTimers={};
+function startExAnim(exId,el){
+  const url0=EXERCISE_IMGS[exId];
+  if(!url0)return;
+  const url1=url0.replace('/0.jpg','/1.jpg');
+  let frame=0;
+  const img=el.querySelector('img');
+  if(!img)return;
+  _animTimers[exId]=setInterval(()=>{
+    img.src=frame%2===0?url1:url0;
+    frame++;
+  },700);
+}
+function stopExAnim(exId){
+  clearInterval(_animTimers[exId]);
+  delete _animTimers[exId];
 }
 
 // ── WORKOUT LOGIC ─────────────────────────────────────────────────────────────
@@ -583,8 +597,13 @@ Views.exercises=function(filter){
   const grid=exs.map(e=>{
     const pr=Store.getPRs()[e.id];
     const url=EXERCISE_IMGS[e.id];
-    return `<div class="ex-card" onclick="Views.exerciseDetail('${e.id}')">
-      <div class="ex-card-img" data-wgerid="${e.id}">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catColor(e.cat)}22">${e.emoji}</div>`}</div>
+    const catCol=catColor(e.cat);
+    return `<div class="ex-card" onclick="Views.exerciseDetail('${e.id}')"
+        onmouseenter="startExAnim('${e.id}',this.querySelector('.ex-card-img'))"
+        onmouseleave="stopExAnim('${e.id}')"
+        ontouchstart="startExAnim('${e.id}',this.querySelector('.ex-card-img'))"
+        ontouchend="stopExAnim('${e.id}')">
+      <div class="ex-card-img" data-wgerid="${e.id}">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catCol}22">${e.emoji}</div>`}</div>
       <div class="ex-card-body">
         <div class="ex-card-name">${e.name}</div>
         <div class="ex-card-cat">${e.muscles[0]}</div>
@@ -622,7 +641,7 @@ Views.exerciseDetail=function(id){
     </div>
     <div class="ex-anim-hero" id="ex-anim-${id}">
       <div class="ex-anim-loading">
-        ${fallbackImg?`<img src="${fallbackImg}" class="ex-anim-fallback" loading="lazy">`:`<div style="font-size:60px">${ex.emoji}</div>`}
+        ${fallbackImg?`<img id="ex-hero-img-${id}" src="${fallbackImg}" class="ex-anim-fallback" loading="lazy">`:`<div style="font-size:60px">${ex.emoji}</div>`}
       </div>
       <div class="ex-anim-overlay">
         <div style="font-size:22px;font-weight:800;line-height:1.2">${ex.name}</div>
@@ -898,26 +917,24 @@ function exportData(){
 }
 function clearAll(){if(confirm('¿Borrar TODOS los datos? Esto no se puede deshacer.')){localStorage.clear();toast('Datos borrados');Router.reset('home');}}
 async function loadWgerDetail(exId){
+  const url0=EXERCISE_IMGS[exId];
+  if(url0){
+    const url1=url0.replace('/0.jpg','/1.jpg');
+    const heroImg=document.getElementById('ex-hero-img-'+exId);
+    if(heroImg){
+      let frame=0;
+      setInterval(()=>{
+        heroImg.src=frame%2===0?url1:url0;
+        frame++;
+      },900);
+    }
+  }
   const data=await fetchWgerData(exId);
-  if(!data)return;
-  const hero=document.getElementById('ex-anim-'+exId);
-  if(data.gif&&hero){
-    const loading=hero.querySelector('.ex-anim-loading');
-    if(loading){
-      loading.innerHTML=`<img src="${data.gif}" class="ex-anim-gif" alt="animación ejercicio">`;
-    }
-  } else if(data.img&&hero){
-    const loading=hero.querySelector('.ex-anim-loading');
-    if(loading){
-      const fb=loading.querySelector('img');
-      if(fb)fb.src=data.img;
-      else loading.innerHTML=`<img src="${data.img}" class="ex-anim-fallback">`;
-    }
-  }
+  if(!data?.img)return;
+  const heroImg=document.getElementById('ex-hero-img-'+exId);
+  if(heroImg){heroImg.src=data.img;heroImg.classList.add('wger-loaded');}
   const thumb=document.getElementById('video-thumb-'+exId);
-  if(thumb&&data.img){
-    thumb.style.backgroundImage=`url('${data.img}')`;
-  }
+  if(thumb)thumb.style.backgroundImage=`url('${data.img}')`;
 }
 function loadVideo(id,embedUrl,ytUrl){
   const wrap=document.getElementById('video-wrap-'+id);
