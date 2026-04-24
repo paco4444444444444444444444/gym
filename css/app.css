@@ -110,8 +110,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font
 .ex-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 12px 12px;}
 .ex-card{background:#1c1c1e;border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .12s,opacity .15s;border:1px solid #2c2c2e;}
 .ex-card:active{transform:scale(.96);opacity:.85;}
-.ex-card-img{width:100%;aspect-ratio:4/3;overflow:hidden;background:#2a2a2a;display:flex;align-items:center;justify-content:center;}
-.ex-card-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.ex-card-img{width:100%;aspect-ratio:4/3;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center;}
+.ex-card-img img{width:100%;height:100%;object-fit:contain;display:block;background:#fff;}
 .ex-card-emoji{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:40px;}
 .ex-card-body{padding:10px 12px 14px;}
 .ex-card-name{font-size:14px;font-weight:700;line-height:1.3;color:var(--txt);}
@@ -267,10 +267,10 @@ input[type=number]{-moz-appearance:textfield;}
 .muscle-svg-wrap-sm{width:100px;flex-shrink:0;padding:12px 8px 0 0;}
 
 /* EXERCISE ANIMATED HERO (wger 3D figures) */
-.ex-anim-hero{position:relative;width:100%;min-height:260px;background:#111;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.ex-anim-hero{position:relative;width:100%;min-height:260px;background:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;}
 .ex-anim-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
 .ex-anim-fallback{width:100%;height:100%;object-fit:cover;object-position:center top;opacity:.7;}
-.ex-anim-gif{width:100%;height:100%;object-fit:contain;background:#111;}
+.ex-anim-gif{width:100%;height:260px;object-fit:contain;background:#fff;display:block;}
 .ex-anim-overlay{position:absolute;bottom:0;left:0;right:0;padding:16px;background:linear-gradient(transparent,rgba(0,0,0,.85));z-index:2;}
 .muscle-svg-hero{position:absolute;right:8px;top:8px;width:80px;opacity:.9;z-index:2;}
 .wger-loaded{animation:wgerFade .3s ease;}

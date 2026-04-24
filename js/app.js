@@ -116,16 +116,13 @@ const Modal={
     list.innerHTML=`<div class="filter-scroll" style="padding:0 12px 10px">${chips}</div>
       <div class="ex-grid" style="padding:0 12px 16px">${filtered.map(e=>{
         const url=EXERCISE_IMGS[e.id];
-        return `<div class="ex-card" onclick="Modal.pick('${e.id}')"
-            onmouseenter="startExAnim('${e.id}',this.querySelector('.ex-card-img'))"
-            onmouseleave="stopExAnim('${e.id}')">
-          <div class="ex-card-img" data-wgerid="${e.id}">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catColor(e.cat)}22">${e.emoji}</div>`}</div>
+        return `<div class="ex-card" onclick="Modal.pick('${e.id}')">
+          <div class="ex-card-img">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catColor(e.cat)}22">${e.emoji}</div>`}</div>
           <div class="ex-card-body">
             <div class="ex-card-name">${e.name}</div>
             <div class="ex-card-cat">${e.muscles[0]}</div>
           </div>
         </div>`;}).join('')}</div>`;
-    setTimeout(()=>applyWgerImages(list),100);
   }
 };
 
@@ -133,55 +130,64 @@ function catColor(cat){
   return{Pecho:'#ef4444',Espalda:'#3b82f6',Hombros:'#8b5cf6',Brazos:'#f59e0b',Piernas:'#10b981',Core:'#06b6d4',Cardio:'#f97316'}[cat]||'#7c3aed';
 }
 
-const _B='https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
+const _G='https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/';
 const EXERCISE_IMGS={
-  'e001':_B+'Barbell_Bench_Press_-_Medium_Grip/0.jpg',
-  'e002':_B+'Barbell_Incline_Bench_Press_-_Medium_Grip/0.jpg',
-  'e003':_B+'Barbell_Decline_Bench_Press/0.jpg',
-  'e004':_B+'Dumbbell_Bench_Press/0.jpg',
-  'e005':_B+'Dumbbell_Incline_Bench_Press/0.jpg',
-  'e006':_B+'Dumbbell_Flyes/0.jpg',
-  'e007':_B+'Cable_Crossovers/0.jpg',
-  'e008':_B+'Pushups/0.jpg',
-  'e009':_B+'Chest_Dip/0.jpg',
-  'e012':_B+'Barbell_Deadlift/0.jpg',
-  'e013':_B+'Bent_Over_Barbell_Row/0.jpg',
-  'e015':_B+'Pullups/0.jpg',
-  'e016':_B+'Chin-Ups/0.jpg',
-  'e017':_B+'Wide-Grip_Lat_Pulldown/0.jpg',
-  'e018':_B+'Seated_Cable_Rows/0.jpg',
-  'e019':_B+'Dumbbell_One-Arm_Row/0.jpg',
-  'e021':_B+'Romanian_Deadlift/0.jpg',
-  'e022':_B+'Hyperextensions_(Back_Extensions)/0.jpg',
-  'e024':_B+'Barbell_Shoulder_Press/0.jpg',
-  'e025':_B+'Dumbbell_Shoulder_Press/0.jpg',
-  'e026':_B+'Arnold_Dumbbell_Press/0.jpg',
-  'e027':_B+'Dumbbell_Lateral_Raise/0.jpg',
-  'e028':_B+'Dumbbell_Front_Raise/0.jpg',
-  'e031':_B+'Barbell_Upright_Row/0.jpg',
-  'e033':_B+'Barbell_Shrug/0.jpg',
-  'e034':_B+'Barbell_Curl/0.jpg',
-  'e035':_B+'EZ-Bar_Curl/0.jpg',
-  'e036':_B+'Dumbbell_Alternate_Bicep_Curl/0.jpg',
-  'e037':_B+'Hammer_Curls/0.jpg',
-  'e039':_B+'Concentration_Curls/0.jpg',
-  'e042':_B+'Barbell_Close-Grip_Bench_Press/0.jpg',
-  'e045':_B+'Lying_Triceps_Press/0.jpg',
-  'e050':_B+'Barbell_Squat/0.jpg',
-  'e051':_B+'Barbell_Front_Squat/0.jpg',
-  'e052':_B+'Leg_Press/0.jpg',
-  'e053':_B+'Hack_Squat/0.jpg',
-  'e054':_B+'Dumbbell_Bulgarian_Split_Squat/0.jpg',
-  'e055':_B+'Dumbbell_Lunges/0.jpg',
-  'e056':_B+'Leg_Extensions/0.jpg',
-  'e057':_B+'Lying_Leg_Curls/0.jpg',
-  'e058':_B+'Standing_Calf_Raises/0.jpg',
-  'e060':_B+'Barbell_Hip_Thrust/0.jpg',
-  'e065':_B+'Sumo_Deadlift/0.jpg',
-  'e066':_B+'Crunch/0.jpg',
-  'e067':_B+'Plank/0.jpg',
-  'e069':_B+'Flat_Bench_Lying_Leg_Raise/0.jpg',
-  'e077':_B+'Hanging_Leg_Raise/0.jpg',
+  'e001':_G+'0025-EIeI8Vf.gif',
+  'e002':_G+'0047-3TZduzM.gif',
+  'e003':_G+'0033-GrO65fd.gif',
+  'e004':_G+'0289-SpYC0Kp.gif',
+  'e005':_G+'0314-ns0SIbU.gif',
+  'e006':_G+'0308-yz9nUhF.gif',
+  'e007':_G+'0153-OQ1otBN.gif',
+  'e008':_G+'0662-I4hDWkc.gif',
+  'e009':_G+'0251-9WTm7dq.gif',
+  'e012':_G+'0032-ila4NZS.gif',
+  'e013':_G+'0027-eZyBC3j.gif',
+  'e015':_G+'1429-Qqi7bko.gif',
+  'e016':_G+'1326-T2mxWqc.gif',
+  'e017':_G+'2330-LEprlgG.gif',
+  'e018':_G+'0861-fUBheHs.gif',
+  'e019':_G+'3156-v2DfH14.gif',
+  'e020':_G+'0202-yUdIGNs.gif',
+  'e021':_G+'0085-wQ2c4XD.gif',
+  'e022':_G+'0489-zhMwOwE.gif',
+  'e023':_G+'0044-XlZ4lAC.gif',
+  'e024':_G+'0091-kTbSH9h.gif',
+  'e025':_G+'0426-A6wtbuL.gif',
+  'e026':_G+'2137-Xy4jlWA.gif',
+  'e027':_G+'0334-DsgkuIt.gif',
+  'e028':_G+'0310-3eGE2JC.gif',
+  'e029':_G+'2292-mu5Guxt.gif',
+  'e030':_G+'0178-goJ6ezq.gif',
+  'e031':_G+'0120-UDlhcO8.gif',
+  'e032':_G+'0603-67n3r98.gif',
+  'e033':_G+'0095-dG7tG5y.gif',
+  'e034':_G+'0031-25GPyDY.gif',
+  'e035':_G+'0447-6TG6x2w.gif',
+  'e036':_G+'1649-Zwiw7XR.gif',
+  'e037':_G+'0313-slDvUAU.gif',
+  'e039':_G+'0297-gvsWLQw.gif',
+  'e040':_G+'0868-G08RZcQ.gif',
+  'e042':_G+'0030-J6Dx1Mu.gif',
+  'e043':_G+'0201-3ZflifB.gif',
+  'e044':_G+'0194-2IxROQ1.gif',
+  'e045':_G+'0060-h8LFzo9.gif',
+  'e046':_G+'0814-X6C6i5Y.gif',
+  'e050':_G+'0043-qXTaZnJ.gif',
+  'e051':_G+'0042-zG0zs85.gif',
+  'e052':_G+'1463-2Qh2J1e.gif',
+  'e053':_G+'0046-5VCj6iH.gif',
+  'e054':_G+'1760-yn8yg1r.gif',
+  'e055':_G+'0336-RRWFUcw.gif',
+  'e056':_G+'0585-my33uHU.gif',
+  'e057':_G+'0586-17lJ1kr.gif',
+  'e058':_G+'1372-8ozhUIZ.gif',
+  'e060':_G+'1409-qKBpF7I.gif',
+  'e065':_G+'0117-KgI0tqW.gif',
+  'e066':_G+'0972-tZkGYZ9.gif',
+  'e067':_G+'0464-CosupLu.gif',
+  'e069':_G+'0620-WhuFnR7.gif',
+  'e077':_G+'0472-I3tsCnC.gif',
 };
 function exImg(id,size){
   const url=EXERCISE_IMGS[id];
@@ -598,12 +604,8 @@ Views.exercises=function(filter){
     const pr=Store.getPRs()[e.id];
     const url=EXERCISE_IMGS[e.id];
     const catCol=catColor(e.cat);
-    return `<div class="ex-card" onclick="Views.exerciseDetail('${e.id}')"
-        onmouseenter="startExAnim('${e.id}',this.querySelector('.ex-card-img'))"
-        onmouseleave="stopExAnim('${e.id}')"
-        ontouchstart="startExAnim('${e.id}',this.querySelector('.ex-card-img'))"
-        ontouchend="stopExAnim('${e.id}')">
-      <div class="ex-card-img" data-wgerid="${e.id}">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catCol}22">${e.emoji}</div>`}</div>
+    return `<div class="ex-card" onclick="Views.exerciseDetail('${e.id}')">
+      <div class="ex-card-img">${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="ex-card-emoji" style="background:${catCol}22">${e.emoji}</div>`}</div>
       <div class="ex-card-body">
         <div class="ex-card-name">${e.name}</div>
         <div class="ex-card-cat">${e.muscles[0]}</div>
@@ -615,7 +617,6 @@ Views.exercises=function(filter){
     <div style="padding:0 16px 10px"><div class="search-box"><span class="search-ico">🔍</span><input class="search-inp" placeholder="Buscar ejercicio…" oninput="searchEx(this.value,'${filter}')"></div></div>
     <div class="fchips">${chips}</div>
     <div class="ex-grid" id="ex-list">${grid}</div>`;
-  setTimeout(()=>applyWgerImages(),50);
 };
 
 Views.exerciseDetail=function(id){
@@ -632,8 +633,7 @@ Views.exerciseDetail=function(id){
   const stepsHTML=ex.steps?ex.steps.map((st,i)=>`<div class="step-row"><div class="step-num">${i+1}</div><div class="step-txt">${st}</div></div>`).join(''):'';
   const ytQuery=encodeURIComponent(ex.ytSearch||ex.name+' tecnica correcta español');
   const ytUrl=`https://www.youtube.com/results?search_query=${ytQuery}`;
-  const img0=EXERCISE_IMGS[id]||'';
-  const img1=img0?img0.replace('/0.jpg','/1.jpg'):'';
+  const gifUrl=EXERCISE_IMGS[id]||'';
   document.getElementById('main').innerHTML=`
     <div class="subpage-header">
       <button class="back-btn" onclick="Router.back()">‹ Atrás</button>
@@ -641,7 +641,7 @@ Views.exerciseDetail=function(id){
     </div>
     <div class="ex-anim-hero" id="ex-anim-${id}">
       <div class="ex-anim-loading">
-        ${img0?`<img id="ex-hero-img-${id}" src="${img0}" class="ex-anim-fallback">`:`<div style="font-size:60px;position:relative;z-index:1">${ex.emoji}</div>`}
+        ${gifUrl?`<img src="${gifUrl}" class="ex-anim-gif">`:`<div style="font-size:60px;position:relative;z-index:1">${ex.emoji}</div>`}
       </div>
       <div class="ex-anim-overlay">
         <div style="font-size:22px;font-weight:800;line-height:1.2">${ex.name}</div>
@@ -670,7 +670,6 @@ Views.exerciseDetail=function(id){
       <a href="${ytUrl}" target="_blank" class="btn btn-outline" style="flex:1;text-align:center;text-decoration:none">▶ YouTube</a>
       <button class="btn btn-primary" style="flex:1" onclick="addToActive('${id}')">＋ Añadir</button>
     </div>`;
-  if(img0&&img1)loadWgerDetail(id);
 };
 
 // ── VIEW: PROGRAMS ────────────────────────────────────────────────────────────
